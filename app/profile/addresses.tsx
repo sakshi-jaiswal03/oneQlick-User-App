@@ -176,7 +176,7 @@ export default function AddressesScreen() {
             <Button
               mode="text"
               onPress={() => {/* TODO: Implement edit */}}
-              icon="edit"
+              icon="pencil"
             >
               Edit
             </Button>

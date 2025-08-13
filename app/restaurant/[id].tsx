@@ -136,7 +136,7 @@ export default function RestaurantScreen() {
         style={styles.backButton}
         onPress={() => router.back()}
       >
-        <MaterialIcons name="arrow-back" size={24} color="white" />
+        <MaterialIcons name="arrow-back-ios" size={24} color="white" />
       </Pressable>
 
       {/* Restaurant info overlay */}

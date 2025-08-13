@@ -375,7 +375,7 @@ export default function FoodItemScreen() {
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         <View style={styles.header}>
           <IconButton
-            icon="arrow-back"
+            icon="arrow-back-ios"
             size={24}
             iconColor="#333"
             onPress={() => router.back()}

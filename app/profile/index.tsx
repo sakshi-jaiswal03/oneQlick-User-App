@@ -37,22 +37,22 @@ export default function ProfileScreen() {
     {
       id: '1',
       title: 'Personal Information',
-      subtitle: 'Edit your profile details',
-      icon: 'person',
+      subtitle: 'Update your profile details',
+      icon: 'account-circle',
       onPress: () => router.push('/profile/edit'),
     },
     {
       id: '2',
       title: 'Addresses',
       subtitle: 'Manage delivery addresses',
-      icon: 'location-on',
+      icon: 'place',
       onPress: () => router.push('/profile/addresses'),
     },
     {
       id: '3',
       title: 'Payment Methods',
       subtitle: 'Manage payment options',
-      icon: 'credit-card',
+      icon: 'payment',
       onPress: () => router.push('/(tabs)/home'),
     },
     {
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
       id: '2',
       title: 'Contact Us',
       subtitle: 'Reach out to our team',
-      icon: 'contact-support',
+      icon: 'phone',
       onPress: () => {/* TODO: Implement contact */},
     },
     {
@@ -121,7 +121,7 @@ export default function ProfileScreen() {
             mode="outlined"
             onPress={() => router.push('/profile/edit')}
             style={styles.editButton}
-            icon="edit"
+            icon="pencil"
           >
             Edit
           </Button>
@@ -171,7 +171,7 @@ export default function ProfileScreen() {
 
             <View style={styles.settingItem}>
               <View style={styles.settingInfo}>
-                <MaterialIcons name="location-on" size={24} color="#666" />
+                <MaterialIcons name="place" size={24} color="#666" />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Location Services</Text>
                   <Text style={styles.settingSubtitle}>Allow location access for delivery</Text>
