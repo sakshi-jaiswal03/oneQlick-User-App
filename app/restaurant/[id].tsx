@@ -120,7 +120,7 @@ export default function RestaurantScreen() {
     });
     
     // Navigate to cart
-    router.push('/(tabs)/home');
+                  router.push('/(modals)/cart');
   };
 
   const renderHeroSection = () => (

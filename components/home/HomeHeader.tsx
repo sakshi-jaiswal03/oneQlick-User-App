@@ -39,7 +39,7 @@ export default function HomeHeader({ userLocation, onLocationPress }: HomeHeader
         </Pressable>
         
         <Pressable
-          onPress={() => router.push('/(tabs)/home')}
+                      onPress={() => router.push('/(modals)/cart')}
           style={styles.circularButton}
         >
           <MaterialIcons name="shopping-cart" size={24} color="white" />

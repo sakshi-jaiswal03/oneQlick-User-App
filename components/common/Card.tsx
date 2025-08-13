@@ -16,11 +16,29 @@ export default function Card({
   children,
   ...props 
 }: CardProps) {
+  const getPaddingStyle = () => {
+    switch (padding) {
+      case 'none': return styles.paddingNone;
+      case 'small': return styles.paddingSmall;
+      case 'large': return styles.paddingLarge;
+      default: return styles.paddingMedium;
+    }
+  };
+
+  const getMarginStyle = () => {
+    switch (margin) {
+      case 'none': return styles.marginNone;
+      case 'small': return styles.marginSmall;
+      case 'large': return styles.marginLarge;
+      default: return styles.marginMedium;
+    }
+  };
+
   const cardStyle = [
     styles.card,
     styles[variant],
-    styles[`padding${padding.charAt(0).toUpperCase() + padding.slice(1)}`],
-    styles[`margin${margin.charAt(0).toUpperCase() + margin.slice(1)}`],
+    getPaddingStyle(),
+    getMarginStyle(),
     style,
   ];
 

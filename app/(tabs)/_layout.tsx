@@ -58,6 +58,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         return <MaterialIcons name="search" size={iconSize} color={iconColor} />;
       case 'orders':
         return <MaterialIcons name="receipt" size={iconSize} color={iconColor} />;
+      case 'cart':
+        return <MaterialIcons name="shopping-cart" size={iconSize} color={iconColor} />;
       case 'profile':
         return <MaterialIcons name="person" size={iconSize} color={iconColor} />;
       default:
@@ -73,6 +75,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         return 'Search';
       case 'orders':
         return 'Orders';
+      case 'cart':
+        return 'Cart';
       case 'profile':
         return 'Profile';
       default:
@@ -84,7 +88,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     switch (routeName) {
       case 'orders':
         return ordersBadgeCount;
-      case 'profile':
+      case 'cart':
         return cartBadgeCount;
       default:
         return 0;
@@ -178,6 +182,13 @@ export default function TabLayout() {
         name="orders"
         options={{
           title: 'Orders',
+        }}
+      />
+      
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: 'Cart',
         }}
       />
       
