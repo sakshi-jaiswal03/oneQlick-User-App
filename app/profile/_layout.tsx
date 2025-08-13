@@ -29,6 +29,13 @@ export default function ProfileLayout() {
         }} 
       />
       <Stack.Screen 
+        name="addEditAddress" 
+        options={{ 
+          title: 'Add/Edit Address',
+          headerShown: false
+        }} 
+      />
+      <Stack.Screen 
         name="payment" 
         options={{ 
           title: 'Payment Methods',
