@@ -181,7 +181,7 @@ export default function OrdersScreen() {
           {item.status === 'out_for_delivery' && (
             <Button
               mode="contained"
-              onPress={() => router.push('/(tabs)/orders')}
+              onPress={() => router.push('/order-tracking')}
               style={styles.trackButton}
               icon="location-on"
             >

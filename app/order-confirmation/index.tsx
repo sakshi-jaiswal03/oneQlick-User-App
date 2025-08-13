@@ -185,7 +185,7 @@ export default function OrderConfirmationScreen() {
   };
 
   const handleTrackOrder = () => {
-    router.push('/(tabs)/orders');
+    router.push('/order-tracking');
   };
 
   const handleContinueShopping = () => {
