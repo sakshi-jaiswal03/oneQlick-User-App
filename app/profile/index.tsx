@@ -53,7 +53,7 @@ export default function ProfileScreen() {
       title: 'Payment Methods',
       subtitle: 'Manage payment options',
       icon: 'credit-card',
-      onPress: () => router.push('/profile/payment'),
+      onPress: () => router.push('/(tabs)/home'),
     },
     {
       id: '4',

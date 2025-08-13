@@ -174,10 +174,10 @@ export default function CheckoutScreen() {
   const renderAddressSelection = () => (
     <Surface style={styles.sectionCard}>
       <View style={styles.sectionHeader}>
-        <MaterialIcons name="location-on" size={24} color="#FF6B35" />
+        <MaterialIcons name="place" size={24} color="#FF6B35" />
         <Text style={styles.sectionTitle}>Delivery Address</Text>
         <IconButton
-          icon="edit"
+          icon="pencil"
           size={20}
           iconColor="#666"
           onPress={() => setAddressModalVisible(true)}
@@ -190,7 +190,7 @@ export default function CheckoutScreen() {
       >
         <View style={styles.addressTypeContainer}>
           <MaterialIcons
-            name={selectedAddress.type === 'home' ? 'home' : selectedAddress.type === 'work' ? 'work' : 'location-on'}
+            name={selectedAddress.type === 'home' ? 'home' : selectedAddress.type === 'work' ? 'work' : 'place'}
             size={20}
             color="#FF6B35"
           />
@@ -223,7 +223,7 @@ export default function CheckoutScreen() {
         <MaterialIcons name="payment" size={24} color="#FF6B35" />
         <Text style={styles.sectionTitle}>Payment Method</Text>
         <IconButton
-          icon="edit"
+          icon="pencil"
           size={20}
           iconColor="#666"
           onPress={() => setPaymentModalVisible(true)}
@@ -267,7 +267,7 @@ export default function CheckoutScreen() {
         <MaterialIcons name="access-time" size={24} color="#FF6B35" />
         <Text style={styles.sectionTitle}>Delivery Time</Text>
         <IconButton
-          icon="edit"
+          icon="pencil"
           size={20}
           iconColor="#666"
           onPress={() => setTimeSlotModalVisible(true)}
@@ -406,12 +406,12 @@ export default function CheckoutScreen() {
       <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
         {/* Header */}
         <View style={styles.header}>
-          <IconButton
-            icon="arrow-back"
-            size={24}
-            iconColor="#333"
-            onPress={() => router.back()}
-          />
+                  <IconButton
+          icon="arrow-left"
+          size={24}
+          iconColor="#333"
+          onPress={() => router.back()}
+        />
           <Text style={styles.headerTitle}>Checkout</Text>
           <View style={{ width: 48 }} />
         </View>
@@ -495,7 +495,7 @@ export default function CheckoutScreen() {
                 <View style={styles.addressModalContent}>
                   <View style={styles.addressTypeContainer}>
                     <MaterialIcons
-                      name={address.type === 'home' ? 'home' : address.type === 'work' ? 'work' : 'location-on'}
+                      name={address.type === 'home' ? 'home' : address.type === 'work' ? 'work' : 'place'}
                       size={20}
                       color="#FF6B35"
                     />

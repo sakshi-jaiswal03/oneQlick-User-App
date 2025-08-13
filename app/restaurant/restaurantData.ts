@@ -387,4 +387,9 @@ export const foodItems: FoodItem[] = [
     preparationTime: '8 min',
     allergens: ['Dairy'],
   },
-]; 
+];
+
+// Default export to prevent routing issues
+export default {
+  restaurantData,
+}; 

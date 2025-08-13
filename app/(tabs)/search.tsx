@@ -176,7 +176,7 @@ export default function SearchScreen() {
         <Text style={styles.title}>Search</Text>
         <Button
           mode="outlined"
-          onPress={() => router.push('/(modals)/filter')}
+          onPress={() => router.push('/(tabs)/search')}
           icon="tune"
         >
           Filters

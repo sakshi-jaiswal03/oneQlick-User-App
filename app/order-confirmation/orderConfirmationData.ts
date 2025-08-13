@@ -203,4 +203,13 @@ export const pushNotificationSetup = {
     "Delivery tracking",
     "Special offers",
   ],
+};
+
+// Default export to prevent routing issues
+export default {
+  sampleOrderConfirmation,
+  celebrationMessages,
+  progressColors,
+  socialShareContent,
+  pushNotificationSetup,
 }; 

@@ -236,4 +236,14 @@ export const termsAndConditions = [
   "Payment will be collected at the time of delivery for cash on delivery orders.",
   "Refunds will be processed within 3-5 business days for cancelled orders.",
   "For any queries or complaints, please contact our customer support.",
-]; 
+];
+
+// Default export to prevent routing issues
+export default {
+  deliveryAddresses,
+  paymentMethods,
+  timeSlots,
+  sampleOrderSummary,
+  restaurantInfo,
+  termsAndConditions,
+}; 

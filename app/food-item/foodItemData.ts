@@ -179,4 +179,11 @@ export const similarItems: SimilarItem[] = [
     image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&h=150&fit=crop&crop=center',
     rating: 4.0,
   },
-]; 
+];
+
+// Default export to prevent routing issues
+export default {
+  foodItemData,
+  customizationOptions,
+  similarItems,
+}; 

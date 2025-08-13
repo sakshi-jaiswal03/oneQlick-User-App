@@ -404,7 +404,7 @@ export default function OrderConfirmationScreen() {
     >
       <Surface style={styles.sectionCard}>
         <View style={styles.sectionHeader}>
-          <MaterialIcons name="location-on" size={24} color="#FF6B35" />
+          <MaterialIcons name="place" size={24} color="#FF6B35" />
           <Text style={styles.sectionTitle}>Delivery Details</Text>
         </View>
         
