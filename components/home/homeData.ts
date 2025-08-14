@@ -1,3 +1,5 @@
+import { FoodItem } from '../../types';
+
 export interface PromotionalBanner {
   id: string;
   title: string;
@@ -26,18 +28,6 @@ export interface Restaurant {
   image: string;
   isOpen: boolean;
   offers: string[];
-}
-
-export interface PopularDish {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  rating: number;
-  image: string;
-  restaurant: string;
-  preparationTime: string;
-  isVeg: boolean;
 }
 
 export interface QuickReorder {
@@ -173,94 +163,110 @@ export const nearbyRestaurants: Restaurant[] = [
 ];
 
 // Popular dishes with Unsplash images
-export const popularDishes: PopularDish[] = [
+export const popularDishes: FoodItem[] = [
   {
     id: '1',
     name: 'Butter Chicken',
     description: 'Rich and creamy butter chicken with naan',
     price: 280,
-    rating: 4.6,
     image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Spice Garden',
-    preparationTime: '20 min',
+    category: 'Main Course',
     isVeg: false,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '2',
     name: 'Margherita Pizza',
     description: 'Classic pizza with tomato and mozzarella',
     price: 320,
-    rating: 4.4,
     image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Pizza Palace',
-    preparationTime: '25 min',
+    category: 'Pizza',
     isVeg: true,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '3',
     name: 'Hyderabadi Biryani',
     description: 'Aromatic biryani with tender meat',
     price: 350,
-    rating: 4.8,
     image: 'https://images.unsplash.com/photo-1563379091339-03246963d8a9?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Biryani House',
-    preparationTime: '30 min',
+    category: 'Biryani',
     isVeg: false,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '4',
     name: 'Gulab Jamun',
     description: 'Sweet and soft gulab jamun',
     price: 80,
-    rating: 4.3,
     image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Sweet Corner',
-    preparationTime: '5 min',
+    category: 'Dessert',
     isVeg: true,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '5',
     name: 'Masala Chai',
     description: 'Spiced Indian tea with milk',
     price: 25,
-    rating: 4.1,
     image: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Chai Point',
-    preparationTime: '8 min',
+    category: 'Beverages',
     isVeg: true,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '6',
     name: 'Chicken Tikka',
     description: 'Grilled chicken tikka with mint chutney',
     price: 220,
-    rating: 4.5,
     image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Spice Garden',
-    preparationTime: '18 min',
+    category: 'Appetizer',
     isVeg: false,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '7',
     name: 'Veg Fried Rice',
     description: 'Chinese style vegetable fried rice',
     price: 160,
-    rating: 4.2,
     image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Pizza Palace',
-    preparationTime: '15 min',
+    category: 'Chinese',
     isVeg: true,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
   {
     id: '8',
     name: 'Paneer Butter Masala',
     description: 'Cottage cheese in rich tomato gravy',
     price: 240,
-    rating: 4.4,
     image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop&crop=center',
-    restaurant: 'Spice Garden',
-    preparationTime: '22 min',
+    category: 'Main Course',
     isVeg: true,
+    isAvailable: true,
+    isPopular: true,
+    isRecommended: false,
+    addOns: [],
   },
 ];
 

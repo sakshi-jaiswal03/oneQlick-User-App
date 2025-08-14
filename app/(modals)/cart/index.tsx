@@ -45,6 +45,10 @@ export default function CartScreen() {
     ]).start();
   }, []);
 
+  const handleBackPress = () => {
+    router.back();
+  };
+
   // Calculate bill breakdown
   const calculateBill = () => {
     const subtotal = cart.items.reduce((total, item) => {
@@ -158,10 +162,10 @@ export default function CartScreen() {
   };
 
   const renderCartItem = (item: any) => (
-    <Surface key={item.foodItem.id} style={styles.cartItemCard}>
+    <Surface key={item.foodItem.id} style={styles.cartItem}>
       {/* Item Image */}
-      <View style={styles.itemImageContainer}>
-        <Image source={{ uri: item.foodItem.image }} style={styles.itemImage} />
+      <View style={styles.cartItemHeader}>
+        <Image source={{ uri: item.foodItem.image }} style={styles.cartItemImage} />
         {item.foodItem.isVeg && (
           <View style={styles.vegIndicator}>
             <MaterialIcons name="circle" size={12} color="#4CAF50" />
@@ -170,13 +174,13 @@ export default function CartScreen() {
       </View>
 
       {/* Item Details */}
-      <View style={styles.itemDetails}>
-        <Text style={styles.itemName} numberOfLines={2}>
+      <View style={styles.cartItemInfo}>
+        <Text style={styles.cartItemName} numberOfLines={2}>
           {item.foodItem.name}
         </Text>
         
         {item.foodItem.description && (
-          <Text style={styles.itemDescription} numberOfLines={1}>
+          <Text style={styles.cartItemDescription} numberOfLines={1}>
             {item.foodItem.description}
           </Text>
         )}
@@ -194,9 +198,9 @@ export default function CartScreen() {
         )}
 
         {/* Price and Quantity */}
-        <View style={styles.itemFooter}>
+        <View style={styles.cartItemPriceContainer}>
           <View style={styles.priceContainer}>
-            <Text style={styles.itemPrice}>₹{item.foodItem.price}</Text>
+            <Text style={styles.cartItemPrice}>₹{item.foodItem.price}</Text>
             {item.foodItem.originalPrice && (
               <Text style={styles.originalPrice}>₹{item.foodItem.originalPrice}</Text>
             )}
@@ -236,7 +240,7 @@ export default function CartScreen() {
   );
 
   const renderBillBreakdown = () => (
-    <Surface style={styles.billCard}>
+    <Surface style={styles.billContainer}>
       <Pressable
         style={styles.billHeader}
         onPress={() => setIsBillExpanded(!isBillExpanded)}
@@ -282,7 +286,7 @@ export default function CartScreen() {
           
           <Divider style={styles.billDivider} />
           
-          <View style={styles.billRow}>
+          <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>₹{bill.total.toFixed(2)}</Text>
           </View>
@@ -292,8 +296,8 @@ export default function CartScreen() {
   );
 
   const renderCouponSection = () => (
-    <Surface style={styles.couponCard}>
-      <Text style={styles.sectionTitle}>Apply Coupon</Text>
+    <Surface style={styles.couponContainer}>
+      <Text style={styles.couponHeader}>Apply Coupon</Text>
       
       {appliedCoupon ? (
         <View style={styles.appliedCouponContainer}>
@@ -322,7 +326,7 @@ export default function CartScreen() {
             mode="contained"
             onPress={handleApplyCoupon}
             disabled={!couponCode.trim()}
-            style={styles.applyCouponButton}
+            style={styles.applyButton}
           >
             Apply
           </Button>
@@ -368,9 +372,9 @@ export default function CartScreen() {
 
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
-      <View style={styles.emptyCartIllustration}>
-        <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
-      </View>
+              <View style={styles.emptyCartIcon}>
+          <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
+        </View>
       
       <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
       <Text style={styles.emptyCartSubtitle}>
@@ -391,15 +395,12 @@ export default function CartScreen() {
   if (cart.items.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <IconButton
-            icon="arrow-back-ios"
-            size={24}
-            iconColor="#333"
-            onPress={() => router.back()}
-          />
+        <View style={styles.customHeader}>
+          <Pressable onPress={handleBackPress} style={styles.backButton}>
+            <MaterialIcons name="arrow-back" size={24} color="#333" />
+          </Pressable>
           <Text style={styles.headerTitle}>Cart</Text>
-          <View style={{ width: 48 }} />
+          <View style={styles.headerRight} />
         </View>
         
         {renderEmptyCart()}
@@ -408,35 +409,35 @@ export default function CartScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <IconButton
-            icon="arrow-back-ios"
-            size={24}
-            iconColor="#333"
-            onPress={() => router.back()}
-          />
-          <Text style={styles.headerTitle}>Cart ({cart.items.length})</Text>
-          <IconButton
-            icon="delete-sweep"
-            size={24}
-            iconColor="#F44336"
-            onPress={() => {
-              Alert.alert(
-                'Clear Cart',
-                'Are you sure you want to clear your entire cart?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Clear', style: 'destructive', onPress: clearCart }
-                ]
-              );
-            }}
-          />
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      {/* Custom Header */}
+      <View style={styles.customHeader}>
+        <Pressable onPress={handleBackPress} style={styles.backButton}>
+          <MaterialIcons name="arrow-back" size={24} color="#333" />
+        </Pressable>
+        <Text style={styles.headerTitle}>Cart ({cart.items.length})</Text>
+        <Pressable 
+          onPress={() => {
+            Alert.alert(
+              'Clear Cart',
+              'Are you sure you want to clear your entire cart?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Clear', style: 'destructive', onPress: clearCart }
+              ]
+            );
+          }}
+          style={styles.clearCartButton}
+        >
+          <MaterialIcons name="delete-sweep" size={24} color="#F44336" />
+        </Pressable>
+      </View>
 
-        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
           {/* Cart Items */}
           <View style={styles.cartItemsContainer}>
             {cart.items.map(renderCartItem)}
@@ -454,68 +455,141 @@ export default function CartScreen() {
           {/* Bottom spacing */}
           <View style={{ height: 120 }} />
         </ScrollView>
-      </Animated.View>
 
-      {/* Checkout Button */}
-      <Surface style={styles.checkoutBar}>
-        <View style={styles.checkoutInfo}>
-          <Text style={styles.checkoutTotalLabel}>Total Amount</Text>
-          <Text style={styles.checkoutTotalPrice}>₹{bill.total.toFixed(2)}</Text>
-        </View>
-        
-        <Button
-          mode="contained"
-          onPress={handleProceedToCheckout}
-          style={styles.checkoutButton}
-          contentStyle={styles.checkoutButtonContent}
-        >
-          Proceed to Checkout
-        </Button>
-      </Surface>
-    </SafeAreaView>
-  );
+        {/* Checkout Button */}
+        <Surface style={styles.checkoutBar}>
+          <View style={styles.checkoutInfo}>
+            <Text style={styles.checkoutTotalLabel}>Total Amount</Text>
+            <Text style={styles.checkoutTotalPrice}>₹{bill.total.toFixed(2)}</Text>
+          </View>
+          
+          <Button
+            mode="contained"
+            onPress={handleProceedToCheckout}
+            style={styles.checkoutButton}
+            contentStyle={styles.checkoutButtonContent}
+          >
+            Proceed to Checkout
+          </Button>
+        </Surface>
+      </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  content: { flex: 1 },
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 120, // Space for checkout bar
+  },
+  customHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
-  },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  scrollView: { flex: 1 },
-  cartItemsContainer: { padding: 16, gap: 16 },
-  cartItemCard: {
-    flexDirection: 'row',
-    padding: 16,
-    borderRadius: 16,
     elevation: 2,
-    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  itemImageContainer: { position: 'relative', marginRight: 16 },
-  itemImage: { width: 80, height: 80, borderRadius: 8 },
-  vegIndicator: {
-    position: 'absolute',
-    top: -4,
-    left: -4,
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  headerRight: {
+    width: 48,
+  },
+  clearCartButton: {
+    padding: 8,
+  },
+  cartItemsContainer: {
+    padding: 20,
+  },
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyCartIcon: {
+    marginBottom: 20,
+  },
+  emptyCartTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  emptyCartSubtitle: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  continueShoppingButton: {
+    backgroundColor: '#FF6B35',
+  },
+  continueShoppingButtonContent: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+  },
+  cartItem: {
     backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  cartItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  cartItemImage: {
+    width: 80,
+    height: 80,
     borderRadius: 8,
-    padding: 2,
+    marginRight: 16,
   },
-  itemDetails: { flex: 1 },
-  itemName: { fontSize: 16, fontWeight: '600', color: '#333', marginBottom: 4 },
-  itemDescription: { fontSize: 14, color: '#666', marginBottom: 8 },
-  addOnsContainer: { marginBottom: 8 },
-  addOnsLabel: { fontSize: 12, color: '#666', fontWeight: '500', marginBottom: 2 },
-  addOnText: { fontSize: 12, color: '#666', marginLeft: 8 },
-  itemFooter: {
+  cartItemInfo: {
+    flex: 1,
+  },
+  cartItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  cartItemDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  cartItemPrice: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF6B35',
+  },
+  cartItemPriceContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -524,37 +598,141 @@ const styles = StyleSheet.create({
   priceContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   itemPrice: { fontSize: 16, fontWeight: 'bold', color: '#FF6B35' },
   originalPrice: { fontSize: 14, color: '#999', textDecorationLine: 'line-through' },
-  quantityContainer: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  quantityContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f5f5', borderRadius: 20, paddingHorizontal: 8 },
   quantityButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFF3E0',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'white',
+    elevation: 1,
   },
-  quantityText: { fontSize: 16, fontWeight: 'bold', color: '#333', minWidth: 24, textAlign: 'center' },
-  removeButton: { marginLeft: 8 },
-  couponCard: { margin: 16, padding: 16, borderRadius: 16, elevation: 2, backgroundColor: 'white' },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginBottom: 16 },
-  couponInputContainer: { flexDirection: 'row', gap: 12 },
-  couponInput: { flex: 1 },
-  applyCouponButton: { backgroundColor: '#FF6B35' },
-  appliedCouponContainer: {
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginHorizontal: 16,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  removeButton: {
+    backgroundColor: '#F44336',
+  },
+  removeButtonContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  vegIndicator: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 2,
+  },
+  addOnsContainer: { marginBottom: 8 },
+  addOnsLabel: { fontSize: 12, color: '#666', fontWeight: '500', marginBottom: 2 },
+  addOnText: { fontSize: 12, color: '#666', marginLeft: 8 },
+  billContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  billHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  billTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  expandButton: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  expandButtonText: {
+    fontSize: 14,
+    color: '#FF6B35',
+    marginRight: 4,
+  },
+  billDetails: { padding: 16 },
+  billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  billLabel: { fontSize: 14, color: '#666' },
+  billValue: { fontSize: 14, color: '#333', fontWeight: '500' },
+  discountText: { color: '#4CAF50', fontWeight: 'bold' },
+  billDivider: { marginVertical: 12 },
+  totalRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 2,
+    borderTopColor: '#FF6B35',
+    marginTop: 8,
+  },
+  totalLabel: { fontSize: 18, fontWeight: 'bold', color: '#333' },
+  totalValue: { fontSize: 20, fontWeight: 'bold', color: '#FF6B35' },
+  couponContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    margin: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  couponHeader: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 16,
+  },
+  couponInputContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  couponInput: {
+    flex: 1,
+    marginRight: 12,
+  },
+  applyButton: {
+    backgroundColor: '#FF6B35',
+  },
+  applyButtonContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  couponError: {
+    color: '#F44336',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  couponSuccess: {
+    color: '#4CAF50',
+    fontSize: 12,
+    marginBottom: 8,
+  },
+  appliedCouponContainer: {
     backgroundColor: '#E8F5E8',
-    padding: 12,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#4CAF50',
+    padding: 12,
+    marginTop: 8,
   },
   appliedCouponInfo: { flex: 1 },
   appliedCouponCode: { fontSize: 16, fontWeight: 'bold', color: '#4CAF50', marginBottom: 2 },
   appliedCouponDescription: { fontSize: 14, color: '#666' },
-  couponError: { color: '#F44336', fontSize: 14, marginTop: 8 },
-  couponSuccess: { color: '#4CAF50', fontSize: 14, marginTop: 8 },
   deliveryCard: { margin: 16, padding: 16, borderRadius: 16, elevation: 2, backgroundColor: 'white' },
   deliveryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   deliveryTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginLeft: 8, flex: 1 },
@@ -562,58 +740,39 @@ const styles = StyleSheet.create({
   deliveryMeta: { gap: 8 },
   deliveryMetaItem: { flexDirection: 'row', alignItems: 'center' },
   deliveryMetaText: { fontSize: 14, color: '#666', marginLeft: 8 },
-  billCard: { margin: 16, borderRadius: 16, elevation: 2, backgroundColor: 'white', overflow: 'hidden' },
-  billHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-  },
-  billTitle: { fontSize: 18, fontWeight: '600', color: '#333' },
-  billDetails: { padding: 16 },
-  billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  billLabel: { fontSize: 14, color: '#666' },
-  billValue: { fontSize: 14, color: '#333', fontWeight: '500' },
-  discountText: { color: '#4CAF50', fontWeight: 'bold' },
-  billDivider: { marginVertical: 12 },
-  totalLabel: { fontSize: 16, fontWeight: 'bold', color: '#333' },
-  totalValue: { fontSize: 18, fontWeight: 'bold', color: '#FF6B35' },
   checkoutBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingBottom: 30,
     backgroundColor: 'white',
+    padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#eee',
     elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
-  checkoutInfo: { flex: 1 },
-  checkoutTotalLabel: { fontSize: 14, color: '#666', marginBottom: 2 },
-  checkoutTotalPrice: { fontSize: 24, fontWeight: 'bold', color: '#FF6B35' },
-  checkoutButton: { backgroundColor: '#FF6B35' },
-  checkoutButtonContent: { paddingHorizontal: 32, paddingVertical: 8 },
-  emptyCartContainer: {
+  checkoutInfo: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
   },
-  emptyCartIllustration: { marginBottom: 24 },
-  emptyCartTitle: { fontSize: 24, fontWeight: 'bold', color: '#333', marginBottom: 8, textAlign: 'center' },
-  emptyCartSubtitle: {
-    fontSize: 16,
+  checkoutTotalLabel: {
+    fontSize: 14,
     color: '#666',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
+    marginBottom: 2,
   },
-  continueShoppingButton: { backgroundColor: '#FF6B35' },
-  continueShoppingButtonContent: { paddingHorizontal: 32, paddingVertical: 12 },
+  checkoutTotalPrice: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FF6B35',
+  },
+  checkoutButton: {
+    backgroundColor: '#FF6B35',
+  },
+  checkoutButtonContent: {
+    paddingHorizontal: 32,
+    paddingVertical: 8,
+  },
 }); 

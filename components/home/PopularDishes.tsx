@@ -3,30 +3,19 @@ import { View, StyleSheet, Dimensions } from 'react-native';
 import { Text, Card, Button } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { FoodItem } from '../../types';
 
 const { width } = Dimensions.get('window');
 
-interface PopularDish {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  rating: number;
-  image: string;
-  restaurant: string;
-  preparationTime: string;
-  isVeg: boolean;
-}
-
 interface PopularDishesProps {
-  dishes: PopularDish[];
-  onAddToCart: (dish: PopularDish) => void;
+  dishes: FoodItem[];
+  onAddToCart: (dish: FoodItem) => void;
 }
 
 export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProps) {
   const router = useRouter();
 
-  const renderDish = (dish: PopularDish) => (
+  const renderDish = (dish: FoodItem) => (
     <Card key={dish.id} style={styles.dishCard}>
       <Card.Cover source={{ uri: dish.image }} style={styles.dishImage} />
       <View style={styles.vegIndicator}>
@@ -48,16 +37,16 @@ export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProp
         <View style={styles.dishDetails}>
           <View style={styles.ratingContainer}>
             <MaterialIcons name="star" size={14} color="#FFD700" />
-            <Text style={styles.dishRating}>{dish.rating}</Text>
+            <Text style={styles.dishRating}>4.5</Text>
           </View>
-          <Text style={styles.preparationTime}>{dish.preparationTime}</Text>
+          <Text style={styles.preparationTime}>20-30 min</Text>
         </View>
         
         <View style={styles.dishFooter}>
           <View style={styles.priceContainer}>
             <Text style={styles.dishPrice}>₹{dish.price}</Text>
             <Text style={styles.restaurantName} numberOfLines={1}>
-              {dish.restaurant}
+              Restaurant Name
             </Text>
           </View>
           <Button

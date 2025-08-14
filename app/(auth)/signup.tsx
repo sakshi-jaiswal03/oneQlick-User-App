@@ -25,7 +25,14 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { isValidEmail, isValidPhone, isValidPassword } from '../../utils/helpers';
+import {
+  isValidEmail,
+  isValidPassword,
+  isValidPhone,
+  isValidPhoneWithCountry,
+} from '../../utils/helpers';
+import { PhoneNumberInput } from '../../components/common';
+import { CountryCode } from '../../utils/countryCodes';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
@@ -51,6 +58,7 @@ type SignupStep = 'personal' | 'contact' | 'security' | 'verification' | 'locati
 
 export default function SignupScreen() {
   const [currentStep, setCurrentStep] = useState<SignupStep>('personal');
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode | null>(null);
   const [signupForm, setSignupForm] = useState<SignupForm>({
     firstName: '',
     lastName: '',
@@ -115,8 +123,8 @@ export default function SignupScreen() {
       case 'contact':
         if (!signupForm.phone) {
           newErrors.phone = 'Phone number is required';
-        } else if (!isValidPhone(signupForm.phone)) {
-          newErrors.phone = 'Please enter a valid Indian phone number';
+        } else if (selectedCountry && !isValidPhoneWithCountry(signupForm.phone, selectedCountry.dialCode, selectedCountry.maxLength)) {
+          newErrors.phone = `Please enter a valid ${selectedCountry.name} phone number`;
         }
 
         if (!signupForm.email) {
@@ -326,18 +334,6 @@ export default function SignupScreen() {
     }
   };
 
-  const formatPhoneNumber = (text: string) => {
-    const cleaned = text.replace(/\D/g, '');
-    
-    if (cleaned.length > 0 && !cleaned.startsWith('91')) {
-      return `+91 ${cleaned}`;
-    } else if (cleaned.startsWith('91')) {
-      return `+${cleaned}`;
-    }
-    
-    return `+91 ${cleaned}`;
-  };
-
   const getPasswordStrength = (password: string): { strength: string; color: string; details: string } => {
     if (password.length === 0) return { strength: '', color: '#ccc', details: '' };
     
@@ -442,20 +438,16 @@ export default function SignupScreen() {
       <Text style={styles.stepTitle}>Contact Details</Text>
       <Text style={styles.stepDescription}>How can we reach you?</Text>
 
-      <TextInput
-        label="Phone Number"
+      <PhoneNumberInput
         value={signupForm.phone}
-        onChangeText={(value) => updateForm('phone', formatPhoneNumber(value))}
-        mode="outlined"
-        keyboardType="phone-pad"
-        style={styles.input}
-        left={<TextInput.Icon icon="phone" />}
-        error={!!errors.phone}
+        onChangeText={(phone, country) => {
+          updateForm('phone', phone);
+          setSelectedCountry(country);
+        }}
+        label="Phone Number"
+        error={errors.phone}
         returnKeyType="next"
       />
-      <HelperText type="error" visible={!!errors.phone}>
-        {errors.phone}
-      </HelperText>
 
       <TextInput
         label="Email Address"

@@ -41,6 +41,9 @@ import {
   getAddressTypeInfo,
   getCurrentLocation,
 } from './addressFormData';
+import { PhoneNumberInput } from '../../components/common';
+import { CountryCode } from '../../utils/countryCodes';
+import { isValidPhoneWithCountry } from '../../utils/helpers';
 
 export default function AddEditAddressScreen() {
   const router = useRouter();
@@ -56,6 +59,7 @@ export default function AddEditAddressScreen() {
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode | null>(null);
   
   // Animation values
   const formAnim = useRef(new Animated.Value(0)).current;
@@ -112,7 +116,12 @@ export default function AddEditAddressScreen() {
   };
 
   const validateFormData = (data: AddressFormData) => {
-    const newValidation = validateForm(data);
+    const newValidation = {
+      ...validateForm(data),
+      phoneNumber: selectedCountry 
+        ? isValidPhoneWithCountry(data.phoneNumber, selectedCountry.dialCode, selectedCountry.maxLength)
+        : data.phoneNumber.trim().length > 0,
+    };
     setValidation(newValidation);
   };
 
@@ -330,18 +339,15 @@ export default function AddEditAddressScreen() {
       {/* Phone Number */}
       <View style={styles.formSection}>
         <Text style={styles.formLabel}>Phone Number *</Text>
-        <TextInput
-          mode="outlined"
+        <PhoneNumberInput
           value={formData.phoneNumber}
-          onChangeText={(text) => handleInputChange('phoneNumber', text)}
-          placeholder="+91 98765-43210"
-          keyboardType="phone-pad"
-          style={[styles.textInput, !validation.phoneNumber && formData.phoneNumber && styles.errorInput]}
-          error={!validation.phoneNumber && formData.phoneNumber !== ''}
+          onChangeText={(phone, country) => {
+            handleInputChange('phoneNumber', phone);
+            setSelectedCountry(country);
+          }}
+          placeholder="Enter phone number"
+          error={!validation.phoneNumber && formData.phoneNumber ? 'Please enter a valid phone number' : undefined}
         />
-        {!validation.phoneNumber && formData.phoneNumber && (
-          <Text style={styles.errorText}>Please enter a valid phone number</Text>
-        )}
       </View>
 
       {/* House Number */}

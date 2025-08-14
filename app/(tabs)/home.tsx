@@ -3,11 +3,11 @@ import { ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../hooks/useCart';
+import { FoodItem } from '../../types';
 
 // Import components
 import {
   HomeHeader,
-  SearchBar,
   PromotionalBanners,
   FoodCategories,
   NearbyRestaurants,
@@ -18,7 +18,6 @@ import {
   nearbyRestaurants,
   popularDishes,
   quickReorders,
-  type PopularDish
 } from '../../components/home';
 
 export default function HomeScreen() {
@@ -55,36 +54,13 @@ export default function HomeScreen() {
     console.log('Location picker pressed');
   };
 
-  const handleSearchPress = () => {
-    router.push('/search');
-  };
-
-  const handleVoiceSearchPress = () => {
-    // TODO: Implement voice search
-    console.log('Voice search pressed');
-  };
-
   const handleBannerChange = (index: number) => {
     setCurrentBannerIndex(index);
   };
 
-  const handleAddToCart = (dish: PopularDish) => {
-    // Convert PopularDish to FoodItem format for cart
-    const foodItem = {
-      id: dish.id,
-      name: dish.name,
-      description: dish.description,
-      price: dish.price,
-      image: dish.image,
-      category: 'Popular',
-      isVeg: dish.isVeg,
-      isAvailable: true,
-      isPopular: true,
-      isRecommended: false,
-      addOns: [],
-    };
-    
-    addToCart(foodItem, 1);
+  const handleAddToCart = (dish: FoodItem) => {
+    // Add the food item directly to cart since it's already in the correct format
+    addToCart(dish, 1);
   };
 
   return (
@@ -100,12 +76,6 @@ export default function HomeScreen() {
         <HomeHeader 
           userLocation={userLocation}
           onLocationPress={handleLocationPress}
-        />
-
-        {/* Search Bar */}
-        <SearchBar 
-          onSearchPress={handleSearchPress}
-          onVoiceSearchPress={handleVoiceSearchPress}
         />
 
         {/* Promotional Banners */}

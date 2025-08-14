@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { TextInput, Button, Text, Surface, Avatar } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { ScrollView, View, StyleSheet, Alert } from 'react-native';
+import { TextInput, Avatar, Button, Surface, Text } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
+import { PhoneNumberInput } from '../../components/common';
+import { CountryCode } from '../../utils/countryCodes';
 
 export default function EditProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode | null>(null);
+  
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -88,14 +91,14 @@ export default function EditProfileScreen() {
             left={<TextInput.Icon icon="email" />}
           />
 
-          <TextInput
-            label="Phone Number"
+          <PhoneNumberInput
             value={formData.phone}
-            onChangeText={(value) => updateFormData('phone', value)}
-            mode="outlined"
-            keyboardType="phone-pad"
+            onChangeText={(phone, country) => {
+              updateFormData('phone', phone);
+              setSelectedCountry(country);
+            }}
+            label="Phone Number"
             style={styles.input}
-            left={<TextInput.Icon icon="phone" />}
           />
 
           <TextInput
@@ -105,7 +108,7 @@ export default function EditProfileScreen() {
             mode="outlined"
             multiline
             numberOfLines={3}
-            style={styles.input}
+            style={[styles.input, styles.addressInput]}
             left={<TextInput.Icon icon="map-marker" />}
           />
 
@@ -224,5 +227,8 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderColor: '#d32f2f',
+  },
+  addressInput: {
+    height: 100, // Adjust height for multiline text input
   },
 }); 

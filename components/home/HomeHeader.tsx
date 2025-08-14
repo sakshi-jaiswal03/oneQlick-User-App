@@ -4,7 +4,6 @@ import { Text, Badge } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useCart } from '../../hooks/useCart';
 
 interface HomeHeaderProps {
   userLocation: string;
@@ -13,7 +12,6 @@ interface HomeHeaderProps {
 
 export default function HomeHeader({ userLocation, onLocationPress }: HomeHeaderProps) {
   const router = useRouter();
-  const { cart } = useCart();
 
   return (
     <View style={styles.header}>
@@ -36,18 +34,6 @@ export default function HomeHeader({ userLocation, onLocationPress }: HomeHeader
           style={[styles.circularButton, { backgroundColor: 'white', borderWidth: 2, borderColor: '#FF6B35' }]}
         >
           <MaterialIcons name="person" size={24} color="#FF6B35" />
-        </Pressable>
-        
-        <Pressable
-                      onPress={() => router.push('/(modals)/cart')}
-          style={styles.circularButton}
-        >
-          <MaterialIcons name="shopping-cart" size={24} color="white" />
-          {cart.items.length > 0 && (
-            <Badge style={styles.cartBadge} size={18}>
-              {cart.items.length > 99 ? '99+' : cart.items.length}
-            </Badge>
-          )}
         </Pressable>
         
         <Pressable style={styles.circularButton}>
@@ -106,12 +92,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    backgroundColor: '#4CAF50',
   },
   notificationBadge: {
     position: 'absolute',

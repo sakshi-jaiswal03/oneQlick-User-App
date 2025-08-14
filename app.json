@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FF6B35"
     },
@@ -16,7 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.oneqlick.app"
+      "bundleIdentifier": "com.oneqlick.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice search functionality."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +32,8 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "RECORD_AUDIO"
       ]
     },
     "web": {
@@ -42,6 +46,12 @@
     "scheme": "oneqlick",
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "0c2fce16-7760-4698-8b90-b18d9e60908a"
+      }
     }
   }
 }

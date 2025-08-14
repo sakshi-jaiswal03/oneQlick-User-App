@@ -15,7 +15,9 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { isValidEmail, isValidPhone } from '../../utils/helpers';
+import { isValidEmail, isValidPhone, isValidPhoneWithCountry } from '../../utils/helpers';
+import { PhoneNumberInput } from '../../components/common';
+import { CountryCode } from '../../utils/countryCodes';
 
 type LoginMethod = 'email' | 'phone' | 'otp';
 
@@ -32,6 +34,7 @@ interface OTPForm {
 
 export default function LoginScreen() {
   const [loginMethod, setLoginMethod] = useState<LoginMethod>('phone');
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode | null>(null);
   const [loginForm, setLoginForm] = useState<LoginForm>({
     identifier: '',
     password: '',
@@ -56,8 +59,8 @@ export default function LoginScreen() {
     if (loginMethod === 'otp') {
       if (!otpForm.phone) {
         newErrors.phone = 'Phone number is required';
-      } else if (!isValidPhone(otpForm.phone)) {
-        newErrors.phone = 'Please enter a valid Indian phone number';
+      } else if (selectedCountry && !isValidPhoneWithCountry(otpForm.phone, selectedCountry.dialCode, selectedCountry.maxLength)) {
+        newErrors.phone = `Please enter a valid ${selectedCountry.name} phone number`;
       }
       
       if (isOtpSent && !otpForm.otp) {
@@ -70,8 +73,8 @@ export default function LoginScreen() {
         newErrors.identifier = `${loginMethod === 'email' ? 'Email' : 'Phone number'} is required`;
       } else if (loginMethod === 'email' && !isValidEmail(loginForm.identifier)) {
         newErrors.identifier = 'Please enter a valid email address';
-      } else if (loginMethod === 'phone' && !isValidPhone(loginForm.identifier)) {
-        newErrors.identifier = 'Please enter a valid Indian phone number';
+      } else if (loginMethod === 'phone' && selectedCountry && !isValidPhoneWithCountry(loginForm.identifier, selectedCountry.dialCode, selectedCountry.maxLength)) {
+        newErrors.identifier = `Please enter a valid ${selectedCountry.name} phone number`;
       }
 
       if (!loginForm.password) {
@@ -163,20 +166,6 @@ export default function LoginScreen() {
     }
   };
 
-  const formatPhoneNumber = (text: string) => {
-    // Remove all non-digits
-    const cleaned = text.replace(/\D/g, '');
-    
-    // Add +91 prefix if not present
-    if (cleaned.length > 0 && !cleaned.startsWith('91')) {
-      return `+91 ${cleaned}`;
-    } else if (cleaned.startsWith('91')) {
-      return `+${cleaned}`;
-    }
-    
-    return `+91 ${cleaned}`;
-  };
-
   const renderLoginMethodTabs = () => (
     <View style={styles.methodTabs}>
       <Chip
@@ -208,22 +197,35 @@ export default function LoginScreen() {
 
   const renderLoginForm = () => (
     <View style={styles.formSection}>
-      <TextInput
-        label={loginMethod === 'email' ? 'Email Address' : 'Phone Number'}
-        value={loginForm.identifier}
-        onChangeText={(value) => updateLoginForm('identifier', 
-          loginMethod === 'phone' ? formatPhoneNumber(value) : value
-        )}
-        mode="outlined"
-        keyboardType={loginMethod === 'email' ? 'email-address' : 'phone-pad'}
-        autoCapitalize="none"
-        style={styles.input}
-        left={<TextInput.Icon icon={loginMethod === 'email' ? 'email' : 'phone'} />}
-        error={!!errors.identifier}
-      />
-      <HelperText type="error" visible={!!errors.identifier}>
-        {errors.identifier}
-      </HelperText>
+      {loginMethod === 'phone' ? (
+        <PhoneNumberInput
+          value={loginForm.identifier}
+          onChangeText={(phone, country) => {
+            updateLoginForm('identifier', phone);
+            setSelectedCountry(country);
+          }}
+          label="Phone Number"
+          error={errors.identifier}
+          returnKeyType="next"
+        />
+      ) : (
+        <>
+          <TextInput
+            label="Email Address"
+            value={loginForm.identifier}
+            onChangeText={(value) => updateLoginForm('identifier', value)}
+            mode="outlined"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={styles.input}
+            left={<TextInput.Icon icon="email" />}
+            error={!!errors.identifier}
+          />
+          <HelperText type="error" visible={!!errors.identifier}>
+            {errors.identifier}
+          </HelperText>
+        </>
+      )}
 
       <TextInput
         label="Password"
@@ -257,20 +259,18 @@ export default function LoginScreen() {
 
   const renderOtpForm = () => (
     <View style={styles.formSection}>
-      <TextInput
-        label="Phone Number"
+      <PhoneNumberInput
         value={otpForm.phone}
-        onChangeText={(value) => updateOtpForm('phone', formatPhoneNumber(value))}
-        mode="outlined"
-        keyboardType="phone-pad"
-        style={styles.input}
-        left={<TextInput.Icon icon="phone" />}
-        error={!!errors.phone}
+        onChangeText={(phone, country) => {
+          updateOtpForm('phone', phone);
+          setSelectedCountry(country);
+        }}
+        label="Phone Number"
+        error={errors.phone}
+        returnKeyType={isOtpSent ? 'next' : 'done'}
+        onSubmitEditing={isOtpSent ? undefined : sendOTP}
         disabled={isOtpSent}
       />
-      <HelperText type="error" visible={!!errors.phone}>
-        {errors.phone}
-      </HelperText>
 
       {isOtpSent && (
         <>
