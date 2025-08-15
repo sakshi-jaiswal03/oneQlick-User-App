@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { ScrollView, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef } from 'react';
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  RefreshControl, 
+  SafeAreaView,
+  StatusBar 
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../hooks/useCart';
 import { FoodItem } from '../../types';
-
-// Import components
 import {
   HomeHeader,
   PromotionalBanners,
@@ -13,12 +17,14 @@ import {
   NearbyRestaurants,
   PopularDishes,
   QuickReorder,
+} from '../../components/home';
+import {
   promotionalBanners,
   foodCategories,
   nearbyRestaurants,
   popularDishes,
   quickReorders,
-} from '../../components/home';
+} from '../../components/home/homeData';
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -29,48 +35,44 @@ export default function HomeScreen() {
   const { addToCart } = useCart();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Auto-advance promotional banners
-  useEffect(() => {
-    const bannerTimer = setInterval(() => {
-      if (currentBannerIndex < promotionalBanners.length - 1) {
-        setCurrentBannerIndex(currentBannerIndex + 1);
-      } else {
-        setCurrentBannerIndex(0);
-      }
-    }, 4000);
-
-    return () => clearInterval(bannerTimer);
-  }, [currentBannerIndex]);
-
-  const onRefresh = async () => {
+  const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setRefreshing(false);
-  };
-
-  const handleLocationPress = () => {
-    // TODO: Implement location picker modal
-    console.log('Location picker pressed');
-  };
+    // Simulate API call
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
 
   const handleBannerChange = (index: number) => {
     setCurrentBannerIndex(index);
   };
 
-  const handleAddToCart = (dish: FoodItem) => {
-    // Add the food item directly to cart since it's already in the correct format
-    addToCart(dish, 1);
+  const handleLocationPress = () => {
+    // Handle location change
+    console.log('Location pressed');
+  };
+
+  const handleAddToCart = async (dish: FoodItem) => {
+    try {
+      // Add the food item directly to cart since it's already in the correct format
+      await addToCart(dish, 1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      
       <ScrollView 
         ref={scrollViewRef}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
       >
         {/* Header */}
         <HomeHeader 
@@ -102,4 +104,17 @@ export default function HomeScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-} 
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
+  },
+}); 

@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Card, Button } from 'react-native-paper';
+import React, { useState, useCallback } from 'react';
+import { View, StyleSheet, Dimensions, Pressable } from 'react-native';
+import { Text, Surface, Button, IconButton } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { FoodItem } from '../../types';
@@ -14,67 +14,146 @@ interface PopularDishesProps {
 
 export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProps) {
   const router = useRouter();
+  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
 
-  const renderDish = (dish: FoodItem) => (
-    <Card key={dish.id} style={styles.dishCard}>
-      <Card.Cover source={{ uri: dish.image }} style={styles.dishImage} />
-      <View style={styles.vegIndicator}>
-        <MaterialIcons 
-          name={dish.isVeg ? "circle" : "cancel"} 
-          size={16} 
-          color={dish.isVeg ? "#4CAF50" : "#F44336"} 
-        />
-      </View>
-      
-      <Card.Content style={styles.dishContent}>
-        <Text style={styles.dishName} numberOfLines={1}>
-          {dish.name}
-        </Text>
-        <Text style={styles.dishDescription} numberOfLines={2}>
-          {dish.description}
-        </Text>
-        
-        <View style={styles.dishDetails}>
-          <View style={styles.ratingContainer}>
-            <MaterialIcons name="star" size={14} color="#FFD700" />
-            <Text style={styles.dishRating}>4.5</Text>
+  const handleAddToCart = useCallback(async (dish: FoodItem) => {
+    const currentQuantity = itemQuantities[dish.id] || 0;
+    const newQuantity = currentQuantity + 1;
+    setItemQuantities(prev => ({ ...prev, [dish.id]: newQuantity }));
+    
+    // Call the parent's onAddToCart function
+    await onAddToCart(dish);
+  }, [itemQuantities, onAddToCart]);
+
+  const handleIncreaseQuantity = useCallback(async (dish: FoodItem) => {
+    const currentQuantity = itemQuantities[dish.id] || 0;
+    const newQuantity = currentQuantity + 1;
+    setItemQuantities(prev => ({ ...prev, [dish.id]: newQuantity }));
+    
+    // Call the parent's onAddToCart function
+    await onAddToCart(dish);
+  }, [itemQuantities, onAddToCart]);
+
+  const handleDecreaseQuantity = useCallback((dish: FoodItem) => {
+    const currentQuantity = itemQuantities[dish.id] || 0;
+    if (currentQuantity > 0) {
+      const newQuantity = currentQuantity - 1;
+      if (newQuantity === 0) {
+        setItemQuantities(prev => {
+          const newQuantities = { ...prev };
+          delete newQuantities[dish.id];
+          return newQuantities;
+        });
+      } else {
+        setItemQuantities(prev => ({ ...prev, [dish.id]: newQuantity }));
+      }
+    }
+  }, [itemQuantities]);
+
+  const renderDish = useCallback((dish: FoodItem) => {
+    const quantity = itemQuantities[dish.id] || 0;
+    
+    return (
+      <Surface key={dish.id} style={styles.dishCard}>
+        {/* Food Image with Veg Indicator */}
+        <View style={styles.imageContainer}>
+          <Surface style={styles.imageWrapper}>
+            <Text style={styles.dishImage}>🍽️</Text>
+          </Surface>
+          <View style={[styles.vegIndicator, { backgroundColor: dish.isVeg ? '#4CAF50' : '#F44336' }]}>
+            <MaterialIcons 
+              name={dish.isVeg ? "circle" : "cancel"} 
+              size={12} 
+              color="white" 
+            />
           </View>
-          <Text style={styles.preparationTime}>20-30 min</Text>
+          {dish.isPopular && (
+            <View style={styles.popularBadge}>
+              <Text style={styles.popularBadgeText}>🔥 Popular</Text>
+            </View>
+          )}
         </View>
         
-        <View style={styles.dishFooter}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.dishPrice}>₹{dish.price}</Text>
-            <Text style={styles.restaurantName} numberOfLines={1}>
-              Restaurant Name
+        {/* Food Details */}
+        <View style={styles.dishContent}>
+          <View style={styles.dishHeader}>
+            <Text style={styles.dishName} numberOfLines={1}>
+              {dish.name}
             </Text>
+            <Text style={styles.dishCategory}>{dish.category}</Text>
           </View>
-          <Button
-            mode="contained"
-            onPress={() => onAddToCart(dish)}
-            style={styles.addToCartButton}
-            contentStyle={styles.addToCartButtonContent}
-          >
-            Add
-          </Button>
+          
+          <Text style={styles.dishDescription} numberOfLines={2}>
+            {dish.description}
+          </Text>
+          
+          <View style={styles.dishMeta}>
+            <View style={styles.ratingContainer}>
+              <MaterialIcons name="star" size={14} color="#FFD700" />
+              <Text style={styles.dishRating}>4.5</Text>
+              <Text style={styles.ratingCount}>(120)</Text>
+            </View>
+            <Text style={styles.preparationTime}>⏱️ 20-30 min</Text>
+          </View>
+          
+          <View style={styles.dishFooter}>
+            <View style={styles.priceContainer}>
+              <Text style={styles.dishPrice}>₹{dish.price}</Text>
+              <Text style={styles.deliveryInfo}>Free delivery</Text>
+            </View>
+            
+            {quantity === 0 ? (
+              <Button
+                mode="contained"
+                onPress={() => handleAddToCart(dish)}
+                style={styles.addToCartButton}
+                contentStyle={styles.addToCartButtonContent}
+                labelStyle={styles.addToCartButtonLabel}
+              >
+                Add
+              </Button>
+            ) : (
+              <View style={styles.quantitySelector}>
+                <IconButton
+                  icon="minus"
+                  size={20}
+                  iconColor="#FF6B35"
+                  onPress={() => handleDecreaseQuantity(dish)}
+                  style={styles.quantityButton}
+                />
+                <Text style={styles.quantityText}>{quantity}</Text>
+                <IconButton
+                  icon="plus"
+                  size={20}
+                  iconColor="#FF6B35"
+                  onPress={() => handleIncreaseQuantity(dish)}
+                  style={styles.quantityButton}
+                />
+              </View>
+            )}
+          </View>
         </View>
-      </Card.Content>
-    </Card>
-  );
+      </Surface>
+    );
+  }, [itemQuantities, handleAddToCart, handleIncreaseQuantity, handleDecreaseQuantity]);
 
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Popular Dishes</Text>
-        <Button
-          mode="text"
+        <View style={styles.titleContainer}>
+          <Text style={styles.sectionTitle}>🍽️ Popular Dishes</Text>
+          <Text style={styles.sectionSubtitle}>Most loved by our customers</Text>
+        </View>
+        <Pressable 
+          style={styles.viewAllButton}
           onPress={() => router.push('/search')}
-          textColor="#FF6B35"
         >
-          View All
-        </Button>
+          <Text style={styles.viewAllText}>View All</Text>
+          <MaterialIcons name="arrow-forward" size={16} color="#FF6B35" />
+        </Pressable>
       </View>
-      <View style={styles.dishesGrid}>
+      
+      <View style={styles.dishesContainer}>
         {dishes.map(renderDish)}
       </View>
     </View>
@@ -89,58 +168,130 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  titleContainer: {
+    flex: 1,
+    marginRight: 16,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1a1a1a',
+    marginBottom: 4,
   },
-  dishesGrid: {
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  viewAllButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  viewAllText: {
+    color: '#FF6B35',
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 4,
+  },
+  dishesContainer: {
+    gap: 16,
   },
   dishCard: {
-    width: (width - 60) / 2,
-    marginBottom: 16,
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginRight: 16,
+  },
+  imageWrapper: {
+    width: 80,
+    height: 80,
     borderRadius: 12,
-    elevation: 2,
+    backgroundColor: '#FFF8E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFE082',
   },
   dishImage: {
-    height: 120,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    fontSize: 32,
   },
   vegIndicator: {
     position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 2,
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+  },
+  popularBadge: {
+    position: 'absolute',
+    bottom: -4,
+    left: -4,
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    elevation: 2,
+  },
+  popularBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '700',
   },
   dishContent: {
-    padding: 12,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  dishHeader: {
+    marginBottom: 8,
   },
   dishName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
     marginBottom: 4,
   },
-  dishDescription: {
+  dishCategory: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 8,
-    lineHeight: 16,
+    color: '#FF6B35',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  dishDetails: {
+  dishDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  dishMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16, // Increased from 12 to 16 for better spacing
+    marginBottom: 16,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -148,40 +299,78 @@ const styles = StyleSheet.create({
   },
   dishRating: {
     marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  ratingCount: {
+    marginLeft: 4,
     fontSize: 12,
-    fontWeight: '600',
-    color: '#333',
+    color: '#999',
   },
   preparationTime: {
+    fontSize: 12,
     color: '#666',
-    fontSize: 11,
+    fontWeight: '500',
   },
   dishFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end', // Align to bottom for better visual balance
-    gap: 12, // Add gap between price and button
+    alignItems: 'center',
   },
   priceContainer: {
-    flex: 1, // Take available space
+    flex: 1,
   },
   dishPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '800',
     color: '#FF6B35',
     marginBottom: 2,
   },
-  restaurantName: {
-    fontSize: 10,
-    color: '#999',
-    fontStyle: 'italic',
+  deliveryInfo: {
+    fontSize: 11,
+    color: '#4CAF50',
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   addToCartButton: {
     backgroundColor: '#FF6B35',
-    minWidth: 60, // Ensure consistent button width
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   addToCartButtonContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  addToCartButtonLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'white',
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    borderRadius: 20,
+    paddingHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  quantityButton: {
+    margin: 0,
+    width: 32,
+    height: 32,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FF6B35',
+    marginHorizontal: 8,
+    minWidth: 20,
+    textAlign: 'center',
   },
 }); 
