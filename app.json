@@ -16,10 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.oneqlick.app",
-      "infoPlist": {
-        "NSMicrophoneUsageDescription": "This app needs access to microphone for voice search functionality."
-      }
+      "bundleIdentifier": "com.oneqlick.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -32,8 +29,7 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "RECORD_AUDIO"
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
