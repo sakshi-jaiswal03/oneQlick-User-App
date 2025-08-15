@@ -17,34 +17,47 @@ export function useCart() {
     discountAmount: 0,
   });
 
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     loadCart();
   }, []);
 
   useEffect(() => {
-    saveCart();
-  }, [cart]);
+    if (isLoaded) {
+      saveCart();
+    }
+  }, [cart, isLoaded]);
 
   const loadCart = async () => {
     try {
       const savedCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        // Ensure the cart has the correct structure
+        if (parsedCart && parsedCart.items) {
+          setCart(parsedCart);
+          console.log('Cart loaded from storage:', parsedCart);
+        }
       }
+      setIsLoaded(true);
     } catch (error) {
       console.error('Error loading cart:', error);
+      setIsLoaded(true);
     }
   };
 
   const saveCart = async () => {
     try {
       await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      console.log('Cart saved to storage:', cart);
     } catch (error) {
       console.error('Error saving cart:', error);
     }
   };
 
   const addToCart = (foodItem: FoodItem, quantity: number = 1, customization?: Record<string, string>, addOns: string[] = []) => {
+    console.log('Adding to cart:', foodItem.name, quantity);
     setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
         item => 
@@ -63,10 +76,12 @@ export function useCart() {
              return sum + addOn.price;
            }, 0)) * updatedItems[existingItemIndex].quantity;
 
-        return calculateCartTotals({
+        const newCart = calculateCartTotals({
           ...prevCart,
           items: updatedItems,
         });
+        console.log('Updated existing item, new cart:', newCart);
+        return newCart;
       } else {
         // Add new item
         const addOnObjects = foodItem.addOns?.filter(addOn => addOns.includes(addOn.id)) || [];
@@ -85,25 +100,31 @@ export function useCart() {
           totalPrice: itemTotalPrice,
         };
 
-        return calculateCartTotals({
+        const newCart = calculateCartTotals({
           ...prevCart,
           items: [...prevCart.items, newItem],
         });
+        console.log('Added new item, new cart:', newCart);
+        return newCart;
       }
     });
   };
 
   const removeFromCart = (itemId: string) => {
+    console.log('Removing from cart:', itemId);
     setCart(prevCart => {
       const updatedItems = prevCart.items.filter(item => item.id !== itemId);
-      return calculateCartTotals({
+      const newCart = calculateCartTotals({
         ...prevCart,
         items: updatedItems,
       });
+      console.log('Item removed, new cart:', newCart);
+      return newCart;
     });
   };
 
   const updateQuantity = (itemId: string, quantity: number) => {
+    console.log('Updating quantity:', itemId, quantity);
     if (quantity <= 0) {
       removeFromCart(itemId);
       return;
@@ -124,14 +145,17 @@ export function useCart() {
         return item;
       });
 
-      return calculateCartTotals({
+      const newCart = calculateCartTotals({
         ...prevCart,
         items: updatedItems,
       });
+      console.log('Quantity updated, new cart:', newCart);
+      return newCart;
     });
   };
 
   const clearCart = () => {
+    console.log('Clearing cart');
     setCart({
       id: '',
       userId: '',
@@ -161,7 +185,9 @@ export function useCart() {
   };
 
   const getCartItemCount = (): number => {
-    return cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    const count = cart.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    console.log('Cart item count:', count);
+    return count;
   };
 
   const isCartEmpty = (): boolean => {

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Platform, Animated, Pressable } from 'react-native';
+import { View, StyleSheet, Platform, Animated, Pressable, Text } from 'react-native';
 import { Tabs } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCart } from '../../hooks/useCart';
 import { useAuth } from '../../hooks/useAuth';
+import { Surface } from 'react-native-paper';
 
 // Custom tab bar component with badges and animations
 function CustomTabBar({ state, descriptors, navigation }: any) {
@@ -15,139 +16,96 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   // Animation values for tab press feedback
   const tabAnimations = state.routes.map(() => new Animated.Value(1));
 
-  // Calculate cart badge count
-  const cartBadgeCount = cart.items.length > 0 ? cart.items.length : 0;
+  // Calculate cart badge count - use the actual cart items count
+  const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
 
   // Calculate orders badge count (mock data)
   const ordersBadgeCount = user ? Math.floor(Math.random() * 5) : 0; // Mock pending orders
 
-  const handleTabPress = (route: any, index: number) => {
+  const handleTabPress = (route: any, isPressed: boolean) => {
+    const { key } = route;
     const event = navigation.emit({
       type: 'tabPress',
-      target: route.key,
+      target: key,
       canPreventDefault: true,
     });
 
-    if (!event.defaultPrevented) {
-      // Animate tab press
-      Animated.sequence([
-        Animated.timing(tabAnimations[index], {
-          toValue: 0.8,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tabAnimations[index], {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-
+    if (!isPressed && !event.defaultPrevented) {
       navigation.navigate(route.name);
     }
-  };
 
-  const getTabIcon = (routeName: string, isFocused: boolean) => {
-    const iconSize = 24;
-    const iconColor = isFocused ? '#FF6B35' : '#666';
-
-    switch (routeName) {
-      case 'home':
-        return <MaterialIcons name="home" size={iconSize} color={iconColor} />;
-      case 'search':
-        return <MaterialIcons name="search" size={iconSize} color={iconColor} />;
-      case 'orders':
-        return <MaterialIcons name="receipt" size={iconSize} color={iconColor} />;
-      case 'cart':
-        return <MaterialIcons name="shopping-cart" size={iconSize} color={iconColor} />;
-      case 'profile':
-        return <MaterialIcons name="person" size={iconSize} color={iconColor} />;
-      default:
-        return <MaterialIcons name="home" size={iconSize} color={iconColor} />;
-    }
-  };
-
-  const getTabLabel = (routeName: string) => {
-    switch (routeName) {
-      case 'home':
-        return 'Home';
-      case 'search':
-        return 'Search';
-      case 'orders':
-        return 'Orders';
-      case 'cart':
-        return 'Cart';
-      case 'profile':
-        return 'Profile';
-      default:
-        return 'Home';
-    }
-  };
-
-  const getBadgeCount = (routeName: string) => {
-    switch (routeName) {
-      case 'orders':
-        return ordersBadgeCount;
-      case 'cart':
-        return cartBadgeCount;
-      default:
-        return 0;
+    // Animate tab press
+    const tabIndex = state.routes.findIndex((r: any) => r.key === key);
+    if (tabIndex !== -1) {
+      Animated.sequence([
+        Animated.timing(tabAnimations[tabIndex], { toValue: 0.8, duration: 100, useNativeDriver: true }),
+        Animated.timing(tabAnimations[tabIndex], { toValue: 1, duration: 100, useNativeDriver: true }),
+      ]).start();
     }
   };
 
   return (
-    <View style={[styles.customTabBar, { paddingBottom: insets.bottom }]}>
+    <Surface style={[styles.tabBar, { paddingBottom: insets.bottom }]}>
       {state.routes.map((route: any, index: number) => {
         const { options } = descriptors[route.key];
+        const label = options.tabBarLabel !== undefined ? options.tabBarLabel : options.title !== undefined ? options.title : route.name;
+
         const isFocused = state.index === index;
-        const badgeCount = getBadgeCount(route.name);
+
+        let icon;
+        let badgeCount = 0;
+
+        // Set icon and badge count based on route name
+        switch (route.name) {
+          case 'home':
+            icon = 'home';
+            break;
+          case 'search':
+            icon = 'search';
+            break;
+          case 'cart':
+            icon = 'shopping-cart';
+            badgeCount = cartBadgeCount;
+            break;
+          case 'orders':
+            icon = 'receipt';
+            badgeCount = ordersBadgeCount;
+            break;
+          case 'profile':
+            icon = 'person';
+            break;
+          default:
+            icon = 'circle';
+        }
 
         return (
           <Pressable
             key={route.key}
-            onPress={() => handleTabPress(route, index)}
-            style={[
-              styles.tabItem,
-              isFocused && styles.tabItemActive
-            ]}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={getTabLabel(route.name)}
+            style={[styles.tab, isFocused && styles.tabFocused]}
+            onPress={() => handleTabPress(route, false)}
+            onPressIn={() => handleTabPress(route, true)}
           >
-            <Animated.View
-              style={[
-                styles.tabIconContainer,
-                { transform: [{ scale: tabAnimations[index] }] }
-              ]}
-            >
-              {getTabIcon(route.name, isFocused)}
-              
-              {/* Badge for orders and cart */}
-              {badgeCount > 0 && (
-                <View style={[
-                  styles.badge,
-                  route.name === 'orders' ? styles.ordersBadge : styles.cartBadge
-                ]}>
-                  <Animated.Text style={styles.badgeText}>
-                    {badgeCount > 99 ? '99+' : badgeCount}
-                  </Animated.Text>
-                </View>
-              )}
+            <Animated.View style={[styles.tabContent, { transform: [{ scale: tabAnimations[index] }] }]}>
+              <View style={styles.iconContainer}>
+                <MaterialIcons
+                  name={icon as any}
+                  size={24}
+                  color={isFocused ? '#FF6B35' : '#666'}
+                />
+                {badgeCount > 0 && (
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{badgeCount}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelFocused]}>
+                {label}
+              </Text>
             </Animated.View>
-            
-            <Animated.Text
-              style={[
-                styles.tabLabel,
-                isFocused && styles.tabLabelActive,
-                { transform: [{ scale: tabAnimations[index] }] }
-              ]}
-            >
-              {getTabLabel(route.name)}
-            </Animated.Text>
           </Pressable>
         );
       })}
-    </View>
+    </Surface>
   );
 }
 
@@ -203,7 +161,7 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  customTabBar: {
+  tabBar: {
     flexDirection: 'row',
     backgroundColor: 'white',
     borderTopWidth: 1,
@@ -216,7 +174,7 @@ const styles = StyleSheet.create({
     shadowOpacity: Platform.OS === 'ios' ? 0.1 : undefined,
     shadowRadius: Platform.OS === 'ios' ? 4 : undefined,
   },
-  tabItem: {
+  tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -224,14 +182,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     minHeight: 60,
   },
-  tabItemActive: {
+  tabFocused: {
     // Active state styling
   },
-  tabIconContainer: {
+  tabContent: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+  },
+  iconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabLabel: {
     fontSize: 12,
@@ -239,7 +202,7 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
   },
-  tabLabelActive: {
+  tabLabelFocused: {
     color: '#FF6B35',
     fontWeight: '600',
   },
@@ -253,12 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 0,
-  },
-  ordersBadge: {
     backgroundColor: '#FF6B35', // Orange for orders
-  },
-  cartBadge: {
-    backgroundColor: '#4CAF50', // Green for cart
   },
   badgeText: {
     color: 'white',
