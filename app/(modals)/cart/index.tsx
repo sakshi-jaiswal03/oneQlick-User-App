@@ -3,10 +3,10 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  Image,
   Animated,
   Pressable,
   Alert,
+  BackHandler,
 } from 'react-native';
 import {
   Text,
@@ -15,13 +15,13 @@ import {
   TextInput,
   IconButton,
   Divider,
-  Chip,
 } from 'react-native-paper';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useCart } from '../../../hooks/useCart';
 import { cartData, availableCoupons } from './cartData';
+import { CartItem } from '../../../components/cart';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -36,7 +36,33 @@ export default function CartScreen() {
   
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  const quantityAnim = useRef(new Animated.Value(1)).current;
+
+  // Use only the actual cart from the hook, no default sample data
+  const displayCart = cart;
+
+  // Handle phone back button press
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        // Navigate to home screen when phone back button is pressed
+        router.push('/(tabs)/home');
+        return true; // Prevent default back behavior
+      };
+
+      const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+
+      return () => subscription.remove();
+    }, [router])
+  );
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Cart screen mounted');
+    console.log('Hook cart items:', cart.items.length);
+    console.log('Display cart items:', displayCart.items.length);
+    console.log('Cart items data:', displayCart.items);
+    console.log('Cart total items count:', cart.items.reduce((total, item) => total + (item.quantity || 1), 0));
+  }, [cart.items.length, displayCart.items.length, cart.items]);
 
   useEffect(() => {
     Animated.parallel([
@@ -46,14 +72,27 @@ export default function CartScreen() {
   }, []);
 
   const handleBackPress = () => {
-    router.back();
+    console.log('Back button pressed, navigating to home...');
+    // Navigate to home screen instead of just going back
+    router.push('/(tabs)/home');
   };
 
   // Calculate bill breakdown
   const calculateBill = () => {
-    const subtotal = cart.items.reduce((total, item) => {
-      const itemTotal = item.foodItem.price * item.quantity;
-      const addOnsTotal = item.addOns.reduce((sum, addOn) => sum + addOn.price, 0);
+    if (displayCart.items.length === 0) {
+      return {
+        subtotal: 0,
+        gst: 0,
+        deliveryFee: 0,
+        packagingCharges: 0,
+        discount: 0,
+        total: 0,
+      };
+    }
+
+    const subtotal = displayCart.items.reduce((total, item) => {
+      const itemTotal = (item.foodItem?.price || 0) * (item.quantity || 1);
+      const addOnsTotal = (item.addOns || []).reduce((sum, addOn) => sum + (addOn?.price || 0), 0);
       return total + itemTotal + addOnsTotal;
     }, 0);
 
@@ -85,21 +124,21 @@ export default function CartScreen() {
   const bill = calculateBill();
 
   const handleQuantityChange = (itemId: string, increment: boolean) => {
-    const item = cart.items.find(item => item.foodItem.id === itemId);
-    if (!item) return;
+    console.log('Quantity change requested:', itemId, increment);
+    const item = displayCart.items.find(item => item.id === itemId);
+    if (!item) {
+      console.log('Item not found:', itemId);
+      return;
+    }
 
-    const newQuantity = increment ? item.quantity + 1 : Math.max(1, item.quantity - 1);
+    const newQuantity = increment ? (item.quantity || 1) + 1 : Math.max(1, (item.quantity || 1) - 1);
+    console.log('New quantity:', newQuantity);
     
     if (newQuantity === 0) {
       handleRemoveItem(itemId);
     } else {
+      // Call the actual updateQuantity function from the hook
       updateQuantity(itemId, newQuantity);
-      
-      // Animate quantity change
-      Animated.sequence([
-        Animated.timing(quantityAnim, { toValue: 1.2, duration: 150, useNativeDriver: true }),
-        Animated.timing(quantityAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
-      ]).start();
     }
   };
 
@@ -109,7 +148,10 @@ export default function CartScreen() {
       'Are you sure you want to remove this item from your cart?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => removeFromCart(itemId) }
+        { text: 'Remove', style: 'destructive', onPress: () => {
+          // Call the actual removeFromCart function from the hook
+          removeFromCart(itemId);
+        }}
       ]
     );
   };
@@ -149,7 +191,7 @@ export default function CartScreen() {
   };
 
   const handleProceedToCheckout = () => {
-    if (cart.items.length === 0) {
+    if (displayCart.items.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout.');
       return;
     }
@@ -160,84 +202,6 @@ export default function CartScreen() {
   const handleContinueShopping = () => {
     router.push('/(tabs)/home');
   };
-
-  const renderCartItem = (item: any) => (
-    <Surface key={item.foodItem.id} style={styles.cartItem}>
-      {/* Item Image */}
-      <View style={styles.cartItemHeader}>
-        <Image source={{ uri: item.foodItem.image }} style={styles.cartItemImage} />
-        {item.foodItem.isVeg && (
-          <View style={styles.vegIndicator}>
-            <MaterialIcons name="circle" size={12} color="#4CAF50" />
-          </View>
-        )}
-      </View>
-
-      {/* Item Details */}
-      <View style={styles.cartItemInfo}>
-        <Text style={styles.cartItemName} numberOfLines={2}>
-          {item.foodItem.name}
-        </Text>
-        
-        {item.foodItem.description && (
-          <Text style={styles.cartItemDescription} numberOfLines={1}>
-            {item.foodItem.description}
-          </Text>
-        )}
-
-        {/* Add-ons */}
-        {item.addOns && item.addOns.length > 0 && (
-          <View style={styles.addOnsContainer}>
-            <Text style={styles.addOnsLabel}>Add-ons:</Text>
-            {item.addOns.map((addOn: any, index: number) => (
-              <Text key={index} style={styles.addOnText}>
-                • {addOn.name} (+₹{addOn.price})
-              </Text>
-            ))}
-          </View>
-        )}
-
-        {/* Price and Quantity */}
-        <View style={styles.cartItemPriceContainer}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.cartItemPrice}>₹{item.foodItem.price}</Text>
-            {item.foodItem.originalPrice && (
-              <Text style={styles.originalPrice}>₹{item.foodItem.originalPrice}</Text>
-            )}
-          </View>
-
-          <View style={styles.quantityContainer}>
-            <Pressable
-              style={styles.quantityButton}
-              onPress={() => handleQuantityChange(item.foodItem.id, false)}
-            >
-              <MaterialIcons name="remove" size={20} color="#FF6B35" />
-            </Pressable>
-            
-            <Animated.Text style={[styles.quantityText, { transform: [{ scale: quantityAnim }] }]}>
-              {item.quantity}
-            </Animated.Text>
-            
-            <Pressable
-              style={styles.quantityButton}
-              onPress={() => handleQuantityChange(item.foodItem.id, true)}
-            >
-              <MaterialIcons name="add" size={20} color="#FF6B35" />
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      {/* Remove Button */}
-      <IconButton
-        icon="delete-outline"
-        size={24}
-        iconColor="#F44336"
-        onPress={() => handleRemoveItem(item.foodItem.id)}
-        style={styles.removeButton}
-      />
-    </Surface>
-  );
 
   const renderBillBreakdown = () => (
     <Surface style={styles.billContainer}>
@@ -372,9 +336,9 @@ export default function CartScreen() {
 
   const renderEmptyCart = () => (
     <View style={styles.emptyCartContainer}>
-              <View style={styles.emptyCartIcon}>
-          <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
-        </View>
+      <View style={styles.emptyCartIcon}>
+        <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
+      </View>
       
       <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
       <Text style={styles.emptyCartSubtitle}>
@@ -392,94 +356,104 @@ export default function CartScreen() {
     </View>
   );
 
-  if (cart.items.length === 0) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.customHeader}>
-          <Pressable onPress={handleBackPress} style={styles.backButton}>
-            <MaterialIcons name="arrow-back" size={24} color="#333" />
-          </Pressable>
-          <Text style={styles.headerTitle}>Cart</Text>
-          <View style={styles.headerRight} />
-        </View>
-        
-        {renderEmptyCart()}
-      </SafeAreaView>
-    );
-  }
+  console.log('About to render cart screen with items:', displayCart.items.length);
 
+  // Always show empty cart initially - no default items
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+    <SafeAreaView style={styles.container}>
       {/* Custom Header */}
       <View style={styles.customHeader}>
         <Pressable onPress={handleBackPress} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color="#333" />
         </Pressable>
-        <Text style={styles.headerTitle}>Cart ({cart.items.length})</Text>
-        <Pressable 
-          onPress={() => {
-            Alert.alert(
-              'Clear Cart',
-              'Are you sure you want to clear your entire cart?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { text: 'Clear', style: 'destructive', onPress: clearCart }
-              ]
-            );
-          }}
-          style={styles.clearCartButton}
-        >
-          <MaterialIcons name="delete-sweep" size={24} color="#F44336" />
-        </Pressable>
+        <Text style={styles.headerTitle}>Cart</Text>
+        {displayCart.items.length > 0 && (
+          <Pressable 
+            onPress={() => {
+              Alert.alert(
+                'Clear Cart',
+                'Are you sure you want to clear your entire cart?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Clear', style: 'destructive', onPress: () => {
+                    clearCart();
+                  }}
+                ]
+              );
+            }}
+            style={styles.clearCartButton}
+          >
+            <MaterialIcons name="delete-sweep" size={24} color="#F44336" />
+          </Pressable>
+        )}
+        {displayCart.items.length === 0 && <View style={styles.headerRight} />}
       </View>
 
-      <ScrollView 
-        style={styles.container}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-          {/* Cart Items */}
-          <View style={styles.cartItemsContainer}>
-            {cart.items.map(renderCartItem)}
-          </View>
-
-          {/* Coupon Section */}
-          {renderCouponSection()}
-
-          {/* Delivery Info */}
-          {renderDeliveryInfo()}
-
-          {/* Bill Breakdown */}
-          {renderBillBreakdown()}
-
-          {/* Bottom spacing */}
-          <View style={{ height: 120 }} />
-        </ScrollView>
-
-        {/* Checkout Button */}
-        <Surface style={styles.checkoutBar}>
-          <View style={styles.checkoutInfo}>
-            <Text style={styles.checkoutTotalLabel}>Total Amount</Text>
-            <Text style={styles.checkoutTotalPrice}>₹{bill.total.toFixed(2)}</Text>
-          </View>
-          
-          <Button
-            mode="contained"
-            onPress={handleProceedToCheckout}
-            style={styles.checkoutButton}
-            contentStyle={styles.checkoutButtonContent}
+      {displayCart.items.length === 0 ? (
+        // Show empty cart
+        renderEmptyCart()
+      ) : (
+        // Show cart with items
+        <>
+          <ScrollView 
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            Proceed to Checkout
-          </Button>
-        </Surface>
-      </SafeAreaView>
-    );
+            {/* Cart Items */}
+            <View style={styles.cartItemsContainer}>
+              {displayCart.items.map((item) => (
+                <CartItem
+                  key={item.id}
+                  item={item}
+                  onQuantityChange={handleQuantityChange}
+                  onRemove={handleRemoveItem}
+                />
+              ))}
+            </View>
+
+            {/* Coupon Section */}
+            {renderCouponSection()}
+
+            {/* Delivery Info */}
+            {renderDeliveryInfo()}
+
+            {/* Bill Breakdown */}
+            {renderBillBreakdown()}
+
+            {/* Bottom spacing */}
+            <View style={{ height: 120 }} />
+          </ScrollView>
+
+          {/* Checkout Button */}
+          <Surface style={styles.checkoutBar}>
+            <View style={styles.checkoutInfo}>
+              <Text style={styles.checkoutTotalLabel}>Total Amount</Text>
+              <Text style={styles.checkoutTotalPrice}>₹{bill.total.toFixed(2)}</Text>
+            </View>
+            
+            <Button
+              mode="contained"
+              onPress={handleProceedToCheckout}
+              style={styles.checkoutButton}
+              contentStyle={styles.checkoutButtonContent}
+            >
+              Proceed to Checkout
+            </Button>
+          </Surface>
+        </>
+      )}
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
+  },
+  scrollView: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -489,30 +463,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    elevation: 2,
+    borderBottomColor: '#e9ecef',
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
   backButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2c3e50',
   },
   headerRight: {
     width: 48,
   },
   clearCartButton: {
     padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#fff5f5',
   },
   cartItemsContainer: {
     padding: 20,
@@ -524,255 +502,262 @@ const styles = StyleSheet.create({
     padding: 40,
   },
   emptyCartIcon: {
-    marginBottom: 20,
+    marginBottom: 24,
+    opacity: 0.6,
   },
   emptyCartTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#2c3e50',
     marginBottom: 12,
     textAlign: 'center',
   },
   emptyCartSubtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#6c757d',
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 24,
   },
   continueShoppingButton: {
     backgroundColor: '#FF6B35',
+    borderRadius: 25,
+    elevation: 4,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   continueShoppingButtonContent: {
-    paddingHorizontal: 32,
+    paddingHorizontal: 40,
     paddingVertical: 12,
   },
-  cartItem: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  cartItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-  },
-  cartItemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 16,
-  },
-  cartItemInfo: {
-    flex: 1,
-  },
-  cartItemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  cartItemDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  cartItemPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6B35',
-  },
-  cartItemPriceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  priceContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  itemPrice: { fontSize: 16, fontWeight: 'bold', color: '#FF6B35' },
-  originalPrice: { fontSize: 14, color: '#999', textDecorationLine: 'line-through' },
-  quantityContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f5f5f5', borderRadius: 20, paddingHorizontal: 8 },
-  quantityButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    elevation: 1,
-  },
-  quantityText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginHorizontal: 16,
-    minWidth: 20,
-    textAlign: 'center',
-  },
-  removeButton: {
-    backgroundColor: '#F44336',
-  },
-  removeButtonContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  vegIndicator: {
-    position: 'absolute',
-    top: -4,
-    left: -4,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 2,
-  },
-  addOnsContainer: { marginBottom: 8 },
-  addOnsLabel: { fontSize: 12, color: '#666', fontWeight: '500', marginBottom: 2 },
-  addOnText: { fontSize: 12, color: '#666', marginLeft: 8 },
   billContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     margin: 20,
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f1f3f4',
   },
   billHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   billTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2c3e50',
   },
-  expandButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  billDetails: { 
+    padding: 0 
   },
-  expandButtonText: {
-    fontSize: 14,
-    color: '#FF6B35',
-    marginRight: 4,
+  billRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 16, 
+    paddingVertical: 12, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#f1f3f4' 
   },
-  billDetails: { padding: 16 },
-  billRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
-  billLabel: { fontSize: 14, color: '#666' },
-  billValue: { fontSize: 14, color: '#333', fontWeight: '500' },
-  discountText: { color: '#4CAF50', fontWeight: 'bold' },
-  billDivider: { marginVertical: 12 },
+  billLabel: { 
+    fontSize: 15, 
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+  billValue: { 
+    fontSize: 15, 
+    color: '#2c3e50', 
+    fontWeight: '600' 
+  },
+  discountText: { 
+    color: '#28a745', 
+    fontWeight: '700' 
+  },
+  billDivider: { 
+    marginVertical: 16 
+  },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderTopWidth: 2,
     borderTopColor: '#FF6B35',
-    marginTop: 8,
+    marginTop: 12,
   },
-  totalLabel: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  totalValue: { fontSize: 20, fontWeight: 'bold', color: '#FF6B35' },
+  totalLabel: { 
+    fontSize: 20, 
+    fontWeight: '700', 
+    color: '#2c3e50' 
+  },
+  totalValue: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: '#FF6B35' 
+  },
   couponContainer: {
     backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     margin: 20,
-    elevation: 2,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f1f3f4',
   },
   couponHeader: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2c3e50',
+    marginBottom: 20,
   },
   couponInputContainer: {
     flexDirection: 'row',
-    marginBottom: 12,
+    marginBottom: 16,
+    gap: 12,
   },
   couponInput: {
     flex: 1,
-    marginRight: 12,
   },
   applyButton: {
     backgroundColor: '#FF6B35',
-  },
-  applyButtonContent: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
+    borderRadius: 8,
+    elevation: 2,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   couponError: {
-    color: '#F44336',
-    fontSize: 12,
+    color: '#dc3545',
+    fontSize: 13,
     marginBottom: 8,
+    fontWeight: '500',
   },
   couponSuccess: {
-    color: '#4CAF50',
-    fontSize: 12,
+    color: '#28a745',
+    fontSize: 13,
     marginBottom: 8,
+    fontWeight: '500',
   },
   appliedCouponContainer: {
-    backgroundColor: '#E8F5E8',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
+    backgroundColor: '#d4edda',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#c3e6cb',
   },
-  appliedCouponInfo: { flex: 1 },
-  appliedCouponCode: { fontSize: 16, fontWeight: 'bold', color: '#4CAF50', marginBottom: 2 },
-  appliedCouponDescription: { fontSize: 14, color: '#666' },
-  deliveryCard: { margin: 16, padding: 16, borderRadius: 16, elevation: 2, backgroundColor: 'white' },
-  deliveryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  deliveryTitle: { fontSize: 18, fontWeight: '600', color: '#333', marginLeft: 8, flex: 1 },
-  deliveryAddress: { fontSize: 14, color: '#333', lineHeight: 20, marginBottom: 12 },
-  deliveryMeta: { gap: 8 },
-  deliveryMetaItem: { flexDirection: 'row', alignItems: 'center' },
-  deliveryMetaText: { fontSize: 14, color: '#666', marginLeft: 8 },
+  appliedCouponInfo: { 
+    flex: 1 
+  },
+  appliedCouponCode: { 
+    fontSize: 16, 
+    fontWeight: '700', 
+    color: '#155724', 
+    marginBottom: 4 
+  },
+  appliedCouponDescription: { 
+    fontSize: 14, 
+    color: '#155724' 
+  },
+  deliveryCard: { 
+    margin: 20, 
+    padding: 24, 
+    borderRadius: 16, 
+    elevation: 4, 
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#f1f3f4',
+  },
+  deliveryHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 16 
+  },
+  deliveryTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#2c3e50', 
+    marginLeft: 12, 
+    flex: 1 
+  },
+  deliveryAddress: { 
+    fontSize: 15, 
+    color: '#495057', 
+    lineHeight: 22, 
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  deliveryMeta: { 
+    gap: 12 
+  },
+  deliveryMetaItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  deliveryMetaText: { 
+    fontSize: 14, 
+    color: '#6c757d', 
+    marginLeft: 12,
+    fontWeight: '500',
+  },
   checkoutBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: 'white',
-    padding: 20,
+    padding: 24,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: '#e9ecef',
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
   checkoutInfo: {
     flex: 1,
   },
   checkoutTotalLabel: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
+    color: '#6c757d',
+    marginBottom: 4,
+    fontWeight: '500',
   },
   checkoutTotalPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '800',
     color: '#FF6B35',
   },
   checkoutButton: {
     backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    elevation: 4,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   checkoutButtonContent: {
-    paddingHorizontal: 32,
-    paddingVertical: 8,
+    paddingHorizontal: 40,
+    paddingVertical: 12,
   },
 }); 
