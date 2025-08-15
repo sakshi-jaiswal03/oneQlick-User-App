@@ -189,24 +189,8 @@ export const profileSections: ProfileSection[] = [
     type: 'toggle',
     value: false,
   },
-  {
-    id: 'marketing-emails',
-    title: 'Marketing Emails',
-    description: 'Receive promotional emails',
-    icon: 'email',
-    type: 'toggle',
-    value: false,
-  },
   
   // Support Section
-  {
-    id: 'help-center',
-    title: 'Help Center',
-    subtitle: 'Find answers to common questions',
-    icon: 'help',
-    type: 'navigation',
-    route: '/support/help',
-  },
   {
     id: 'contact-us',
     title: 'Contact Us',
@@ -232,14 +216,6 @@ export const profileSections: ProfileSection[] = [
     type: 'select',
     value: 'English',
     options: ['English', 'Hindi', 'Gujarati', 'Marathi'],
-  },
-  {
-    id: 'dark-mode',
-    title: 'Dark Mode',
-    description: 'Switch between light and dark themes',
-    icon: 'dark-mode',
-    type: 'toggle',
-    value: false,
   },
   {
     id: 'location-services',
@@ -468,40 +444,6 @@ export const appSettings: AppSetting[] = [
 ];
 
 // Helper functions
-export const getProfileCompletionColor = (completion: number): string => {
-  if (completion >= 80) return '#4CAF50';
-  if (completion >= 60) return '#FF9800';
-  return '#F44336';
-};
-
-export const getProfileCompletionText = (completion: number): string => {
-  if (completion >= 80) return 'Excellent';
-  if (completion >= 60) return 'Good';
-  return 'Needs Improvement';
-};
-
-export const formatMemberSince = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 1) {
-    return '1 day';
-  } else if (diffDays < 7) {
-    return `${diffDays} days`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} week${weeks > 1 ? 's' : ''}`;
-  } else if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months} month${months > 1 ? 's' : ''}`;
-  } else {
-    const years = Math.floor(diffDays / 365);
-    return `${years} year${years > 1 ? 's' : ''}`;
-  }
-};
-
 export const getAddressTypeIcon = (type: string): string => {
   switch (type) {
     case 'home': return 'home';
@@ -529,9 +471,6 @@ export default {
   paymentMethods,
   notificationSettings,
   appSettings,
-  getProfileCompletionColor,
-  getProfileCompletionText,
-  formatMemberSince,
   getAddressTypeIcon,
   getPaymentTypeIcon,
 }; 
