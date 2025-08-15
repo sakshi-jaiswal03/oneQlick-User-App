@@ -16,7 +16,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   // Animation values for tab press feedback
   const tabAnimations = state.routes.map(() => new Animated.Value(1));
 
-  // Calculate cart badge count - use the actual cart items count
+  // Calculate cart badge count - use the actual cart items count for real-time updates
   const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
 
   // Calculate orders badge count (mock data)
@@ -80,7 +80,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
         return (
           <Pressable
-            key={route.key}
+            key={`${route.key}-${cartBadgeCount}`} // Force re-render when cart changes
             style={[styles.tab, isFocused && styles.tabFocused]}
             onPress={() => handleTabPress(route, false)}
             onPressIn={() => handleTabPress(route, true)}

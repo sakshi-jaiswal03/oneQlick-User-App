@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Text, Badge } from 'react-native-paper';
+import { Text, Surface, Badge } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useCart } from '../../hooks/useCart';
 
 interface HomeHeaderProps {
   userLocation: string;
@@ -12,91 +13,126 @@ interface HomeHeaderProps {
 
 export default function HomeHeader({ userLocation, onLocationPress }: HomeHeaderProps) {
   const router = useRouter();
+  const { cart } = useCart();
+
+  // Calculate cart badge count
+  const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
 
   return (
-    <View style={styles.header}>
-      <View style={styles.locationContainer}>
-        <MaterialIcons name="location-on" size={20} color="#FF6B35" />
-        <View style={styles.locationTextContainer}>
-          <Text style={styles.locationLabel}>Delivering to</Text>
-          <Text style={styles.locationText} numberOfLines={1}>
-            {userLocation}
-          </Text>
+    <Surface style={styles.header}>
+      <SafeAreaView edges={['top']}>
+        <View style={styles.headerContent}>
+          {/* Location Section */}
+          <Pressable style={styles.locationSection} onPress={onLocationPress}>
+            <View style={styles.locationIcon}>
+              <MaterialIcons name="location-on" size={20} color="#FF6B35" />
+            </View>
+            <View style={styles.locationInfo}>
+              <Text style={styles.deliveryText}>Deliver to</Text>
+              <Text style={styles.locationText} numberOfLines={1}>
+                {userLocation}
+              </Text>
+            </View>
+            <MaterialIcons name="keyboard-arrow-down" size={20} color="#666" />
+          </Pressable>
+
+          {/* Header Actions */}
+          <View style={styles.headerActions}>
+            {/* Cart Button */}
+            <Pressable
+              onPress={() => router.push('/(modals)/cart')}
+              style={styles.cartButton}
+            >
+              <MaterialIcons name="shopping-cart" size={24} color="#FF6B35" />
+              {cartBadgeCount > 0 && (
+                <Badge style={styles.cartBadge} size={18}>
+                  {cartBadgeCount}
+                </Badge>
+              )}
+            </Pressable>
+            
+            {/* Profile Button */}
+            <Pressable
+              onPress={() => router.push('/profile')}
+              style={styles.profileButton}
+            >
+              <MaterialIcons name="person" size={24} color="#666" />
+            </Pressable>
+          </View>
         </View>
-        <Pressable onPress={onLocationPress}>
-          <MaterialIcons name="edit" size={20} color="#666" />
-        </Pressable>
-      </View>
-      
-      <View style={styles.headerActions}>
-        <Pressable
-          onPress={() => router.push('/profile')}
-          style={[styles.circularButton, { backgroundColor: 'white', borderWidth: 2, borderColor: '#FF6B35' }]}
-        >
-          <MaterialIcons name="person" size={24} color="#FF6B35" />
-        </Pressable>
-        
-        <Pressable style={styles.circularButton}>
-          <MaterialIcons name="notifications" size={24} color="white" />
-          <Badge style={styles.notificationBadge} size={18}>
-            3
-          </Badge>
-        </Pressable>
-      </View>
-    </View>
+      </SafeAreaView>
+    </Surface>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingBottom: 10,
-  },
-  locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 16,
-  },
-  locationTextContainer: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  locationLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 2,
-  },
-  locationText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  circularButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FF6B35',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'white',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  notificationBadge: {
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  locationSection: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  locationIcon: {
+    marginRight: 8,
+  },
+  locationInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  deliveryText: {
+    fontSize: 12,
+    color: '#999',
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#333',
+    fontWeight: '600',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cartButton: {
+    position: 'relative',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF3E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  cartBadge: {
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: '#F44336',
+    backgroundColor: '#FF6B35',
+  },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 

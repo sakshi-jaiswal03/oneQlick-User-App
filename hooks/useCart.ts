@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FoodItem, CartItem, Cart } from '../types';
 
@@ -29,7 +29,7 @@ export function useCart() {
     }
   }, [cart, isLoaded]);
 
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     try {
       const savedCart = await AsyncStorage.getItem(CART_STORAGE_KEY);
       if (savedCart) {
@@ -45,19 +45,20 @@ export function useCart() {
       console.error('Error loading cart:', error);
       setIsLoaded(true);
     }
-  };
+  }, []);
 
-  const saveCart = async () => {
+  const saveCart = useCallback(async () => {
     try {
       await AsyncStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
       console.log('Cart saved to storage:', cart);
     } catch (error) {
       console.error('Error saving cart:', error);
     }
-  };
+  }, [cart]);
 
-  const addToCart = (foodItem: FoodItem, quantity: number = 1, customization?: Record<string, string>, addOns: string[] = []) => {
+  const addToCart = useCallback(async (foodItem: FoodItem, quantity: number = 1, customization?: Record<string, string>, addOns: string[] = []) => {
     console.log('Adding to cart:', foodItem.name, quantity);
+    
     setCart(prevCart => {
       const existingItemIndex = prevCart.items.findIndex(
         item => 
@@ -108,9 +109,12 @@ export function useCart() {
         return newCart;
       }
     });
-  };
 
-  const removeFromCart = (itemId: string) => {
+    // Force immediate save to ensure badge updates
+    await new Promise(resolve => setTimeout(resolve, 0));
+  }, []);
+
+  const removeFromCart = useCallback((itemId: string) => {
     console.log('Removing from cart:', itemId);
     setCart(prevCart => {
       const updatedItems = prevCart.items.filter(item => item.id !== itemId);
@@ -121,9 +125,9 @@ export function useCart() {
       console.log('Item removed, new cart:', newCart);
       return newCart;
     });
-  };
+  }, []);
 
-  const updateQuantity = (itemId: string, quantity: number) => {
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
     console.log('Updating quantity:', itemId, quantity);
     if (quantity <= 0) {
       removeFromCart(itemId);
@@ -152,9 +156,9 @@ export function useCart() {
       console.log('Quantity updated, new cart:', newCart);
       return newCart;
     });
-  };
+  }, [removeFromCart]);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     console.log('Clearing cart');
     setCart({
       id: '',
@@ -167,9 +171,9 @@ export function useCart() {
       appliedOffers: [],
       discountAmount: 0,
     });
-  };
+  }, []);
 
-  const calculateCartTotals = (cartData: Cart): Cart => {
+  const calculateCartTotals = useCallback((cartData: Cart): Cart => {
     const subtotal = cartData.items.reduce((sum, item) => sum + item.totalPrice, 0);
     const deliveryFee = subtotal > 0 ? 30 : 0; // Base delivery fee
     const tax = Math.round((subtotal * 5) / 100); // 5% tax
@@ -182,26 +186,26 @@ export function useCart() {
       tax,
       total: Math.max(0, total),
     };
-  };
+  }, []);
 
-  const getCartItemCount = (): number => {
+  const getCartItemCount = useCallback((): number => {
     const count = cart.items.reduce((sum, item) => sum + (item.quantity || 1), 0);
     console.log('Cart item count:', count);
     return count;
-  };
+  }, [cart.items]);
 
-  const isCartEmpty = (): boolean => {
+  const isCartEmpty = useCallback((): boolean => {
     return cart.items.length === 0;
-  };
+  }, [cart.items.length]);
 
-  const getRestaurantId = (): string | undefined => {
+  const getRestaurantId = useCallback((): string | undefined => {
     if (cart.items.length === 0) return undefined;
     return cart.items[0].foodItem.id.split('_')[0]; // Assuming food item ID contains restaurant ID
-  };
+  }, [cart.items]);
 
-  const canCheckout = (): boolean => {
+  const canCheckout = useCallback((): boolean => {
     return !isCartEmpty() && cart.total > 0;
-  };
+  }, [cart.total, isCartEmpty]);
 
   return {
     cart,
