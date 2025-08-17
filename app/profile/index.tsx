@@ -173,7 +173,7 @@ export default function ProfileScreen() {
       <Surface style={styles.sectionSurface}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
-            <MaterialIcons name={section.icon as any} size={24} color="#666" />
+            <MaterialIcons name={section.icon} size={24} color="#666" />
           </View>
           
           <View style={styles.sectionContent}>

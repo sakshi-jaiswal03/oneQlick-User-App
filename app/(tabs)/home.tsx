@@ -4,7 +4,7 @@ import {
   StyleSheet, 
   ScrollView, 
   RefreshControl, 
-  SafeAreaView,
+  SafeAreaView, 
   StatusBar 
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -26,9 +26,9 @@ import {
   quickReorders,
 } from '../../components/home/homeData';
 
-export default function HomeScreen() {
-  const [refreshing, setRefreshing] = useState(false);
-  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+export default function HomeScreen() { 
+  const [refreshing, setRefreshing] = useState(false); 
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0); 
   const [userLocation, setUserLocation] = useState('Rajpur Village, Haridwar, UK');
   
   const router = useRouter();

@@ -1,3 +1,5 @@
+import { MaterialIcons } from '@expo/vector-icons';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -18,7 +20,7 @@ export interface ProfileSection {
   title: string;
   subtitle?: string;
   description?: string;
-  icon: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
   type: 'navigation' | 'toggle' | 'select' | 'action';
   route?: string;
   value?: string | boolean;
@@ -129,7 +131,7 @@ export const profileSections: ProfileSection[] = [
     id: 'payment-methods',
     title: 'Payment Methods',
     subtitle: 'Manage payment options',
-    icon: 'payment',
+    icon: 'credit-card',
     type: 'navigation',
     route: '/profile/payment-methods',
     badge: '2',
@@ -195,7 +197,7 @@ export const profileSections: ProfileSection[] = [
     id: 'contact-us',
     title: 'Contact Us',
     subtitle: 'Get in touch with our team',
-    icon: 'contact-support',
+    icon: 'support-agent',
     type: 'navigation',
     route: '/support/contact',
   },

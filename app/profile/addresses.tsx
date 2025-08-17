@@ -40,6 +40,7 @@ import {
   Address,
   AddressType,
 } from './addressData';
+import { AddressCard, AddressTypeSelector } from './components';
 
 const { width, height } = Dimensions.get('window');
 
@@ -53,7 +54,7 @@ export default function AddressesScreen() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [deletingAddress, setDeletingAddress] = useState<Address | null>(null);
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
+
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
   
   // Form state
@@ -246,125 +247,14 @@ export default function AddressesScreen() {
   };
 
   const renderAddressCard = (address: Address) => (
-    <Animated.View
+    <AddressCard
       key={address.id}
-      style={[
-        styles.addressCard,
-        {
-          opacity: listAnim,
-          transform: [{
-            translateY: listAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [50, 0],
-            }),
-          }],
-        },
-      ]}
-    >
-      <Surface style={styles.addressSurface}>
-        {/* Address Header */}
-        <View style={styles.addressHeader}>
-          <View style={styles.addressTypeContainer}>
-            <Chip
-              mode="flat"
-              textStyle={{ color: 'white' }}
-              style={[styles.typeChip, { backgroundColor: getAddressTypeColor(address.type) }]}
-              icon={getAddressTypeIcon(address.type)}
-            >
-              {getAddressTypeName(address.type)}
-            </Chip>
-            
-            {address.isDefault && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={styles.defaultChip} compact>
-                Default
-              </Chip>
-            )}
-          </View>
-          
-          <View style={styles.addressActions}>
-            <IconButton
-              icon="edit"
-              size={20}
-              iconColor="#666"
-              onPress={() => handleEditAddress(address)}
-            />
-            <IconButton
-              icon="delete"
-              size={20}
-              iconColor="#F44336"
-              onPress={() => handleDeleteAddress(address)}
-            />
-          </View>
-        </View>
-        
-        <Divider style={styles.divider} />
-        
-        {/* Address Content */}
-        <View style={styles.addressContent}>
-          <Text style={styles.addressName}>{address.name}</Text>
-          <Text style={styles.addressText}>{formatFullAddress(address)}</Text>
-          
-          {/* Additional Info */}
-          <View style={styles.addressInfo}>
-            {address.distance && (
-              <View style={styles.infoItem}>
-                <MaterialIcons name="location-on" size={16} color="#666" />
-                <Text style={styles.infoText}>{address.distance} km away</Text>
-              </View>
-            )}
-            
-            {address.deliveryArea ? (
-              <View style={styles.infoItem}>
-                <MaterialIcons name="check-circle" size={16} color="#4CAF50" />
-                <Text style={styles.infoText}>In delivery area</Text>
-              </View>
-            ) : (
-              <View style={styles.infoItem}>
-                <MaterialIcons name="warning" size={16} color="#FF9800" />
-                <Text style={styles.infoText}>Outside delivery area</Text>
-              </View>
-            )}
-            
-            {address.lastUsed && (
-              <View style={styles.infoItem}>
-                <MaterialIcons name="schedule" size={16} color="#666" />
-                <Text style={styles.infoText}>
-                  Last used {new Date(address.lastUsed).toLocaleDateString()}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-        
-        {/* Action Buttons */}
-        <View style={styles.cardActions}>
-          {!address.isDefault && (
-            <Button
-              mode="outlined"
-              onPress={() => handleSetDefault(address)}
-              icon="star"
-              style={styles.actionButton}
-              compact
-            >
-              Set as Default
-            </Button>
-          )}
-          
-          <Button
-            mode="outlined"
-            onPress={() => {
-              // TODO: Navigate to map view
-              Alert.alert('Map View', 'Map integration coming soon!');
-            }}
-            icon="map-outline"
-            style={styles.actionButton}
-            compact
-          >
-            View on Map
-          </Button>
-        </View>
-      </Surface>
-    </Animated.View>
+      address={address}
+      onEdit={handleEditAddress}
+      onDelete={handleDeleteAddress}
+      onSetDefault={handleSetDefault}
+      animationValue={listAnim}
+    />
   );
 
   const renderAddEditDialog = () => (
@@ -386,41 +276,10 @@ export default function AddressesScreen() {
         <Dialog.Content>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Address Type Selection */}
-            <View style={styles.formSection}>
-              <Text style={styles.formLabel}>Address Type</Text>
-              <Menu
-                visible={showTypeMenu}
-                onDismiss={() => setShowTypeMenu(false)}
-                anchor={
-                  <Pressable
-                    style={styles.typeSelector}
-                    onPress={() => setShowTypeMenu(true)}
-                  >
-                    <MaterialIcons 
-                      name={getAddressTypeIcon(formData.type) as any} 
-                      size={24} 
-                      color={getAddressTypeColor(formData.type)} 
-                    />
-                    <Text style={styles.typeSelectorText}>
-                      {getAddressTypeName(formData.type)}
-                    </Text>
-                    <MaterialIcons name="arrow-drop-down" size={24} color="#666" />
-                  </Pressable>
-                }
-              >
-                {addressTypes.map((type) => (
-                  <Menu.Item
-                    key={type.id}
-                    onPress={() => {
-                      setFormData(prev => ({ ...prev, type: type.id as 'home' | 'office' | 'other' }));
-                      setShowTypeMenu(false);
-                    }}
-                    title={type.name}
-                    leadingIcon="location-on"
-                  />
-                ))}
-              </Menu>
-            </View>
+            <AddressTypeSelector
+              selectedType={formData.type}
+              onTypeChange={(type) => setFormData(prev => ({ ...prev, type }))}
+            />
             
             {/* Address Name */}
             <View style={styles.formSection}>
@@ -510,14 +369,14 @@ export default function AddressesScreen() {
             
             {/* Current Location Button */}
             <View style={styles.formSection}>
-              <Button
-                mode="outlined"
-                onPress={handleUseCurrentLocation}
-                icon="my-location"
-                style={styles.locationButton}
-              >
-                Use Current Location
-              </Button>
+                      <Button
+          mode="outlined"
+          onPress={handleUseCurrentLocation}
+          icon={() => <MaterialIcons name="my-location" size={20} color="#FF6B35" />}
+          style={styles.locationButton}
+        >
+          Use Current Location
+        </Button>
             </View>
             
             {/* Set as Default */}
@@ -591,7 +450,7 @@ export default function AddressesScreen() {
       <Button
         mode="contained"
         onPress={handleAddAddress}
-        icon="add"
+        icon={() => <MaterialIcons name="add" size={20} color="white" />}
         style={styles.addFirstButton}
       >
         Add Your First Address
@@ -604,16 +463,12 @@ export default function AddressesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <IconButton
-          icon="arrow-back"
-          size={24}
-          iconColor="#333"
+          icon={() => <MaterialIcons name="arrow-back" size={24} color="#333" />}
           onPress={() => router.back()}
         />
         <Text style={styles.headerTitle}>Saved Addresses</Text>
         <IconButton
-          icon="help-outline"
-          size={24}
-          iconColor="#666"
+          icon={() => <MaterialIcons name="help-outline" size={24} color="#666" />}
           onPress={() => Alert.alert('Help', 'Address management help coming soon!')}
         />
       </View>
@@ -642,7 +497,7 @@ export default function AddressesScreen() {
         ]}
       >
         <FAB
-          icon="add"
+          icon={() => <MaterialIcons name="add" size={24} color="white" />}
           label="Add Address"
           onPress={handleAddAddress}
           style={styles.fab}
@@ -712,81 +567,7 @@ const styles = StyleSheet.create({
   fab: {
     backgroundColor: '#FF6B35',
   },
-  addressCard: {
-    marginBottom: 16,
-  },
-  addressSurface: {
-    borderRadius: 10,
-    elevation: 2,
-    backgroundColor: '#fff',
-    overflow: 'hidden',
-  },
-  addressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f8f8f8',
-  },
-  addressTypeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  typeChip: {
-    height: 24,
-  },
-  defaultChip: {
-    backgroundColor: '#4CAF50',
-    height: 24,
-  },
-  addressActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  divider: {
-    marginVertical: 8,
-  },
-  addressContent: {
-    padding: 12,
-  },
-  addressName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  addressText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 8,
-  },
-  addressInfo: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
+
   dialog: {
     borderRadius: 10,
   },
@@ -799,20 +580,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 8,
   },
-  typeSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: '#f0f0f0',
-  },
-  typeSelectorText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 8,
-  },
+
   textInput: {
     backgroundColor: '#f8f8f8',
     borderRadius: 8,

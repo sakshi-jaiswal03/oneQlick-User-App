@@ -22,6 +22,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useCart } from '../../../hooks/useCart';
 import { cartData, availableCoupons } from './cartData';
 import { CartItem } from '../../../components/cart';
+import AddressSelector from './AddressSelector';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -308,30 +309,10 @@ export default function CartScreen() {
   );
 
   const renderDeliveryInfo = () => (
-    <Surface style={styles.deliveryCard}>
-      <View style={styles.deliveryHeader}>
-        <MaterialIcons name="location-on" size={20} color="#FF6B35" />
-        <Text style={styles.deliveryTitle}>Delivery Address</Text>
-      </View>
-      
-      <Text style={styles.deliveryAddress}>{selectedAddress}</Text>
-      
-      <View style={styles.deliveryMeta}>
-        <View style={styles.deliveryMetaItem}>
-          <MaterialIcons name="access-time" size={16} color="#666" />
-          <Text style={styles.deliveryMetaText}>
-            Estimated delivery: {cartData.estimatedDelivery}
-          </Text>
-        </View>
-        
-        <View style={styles.deliveryMetaItem}>
-          <MaterialIcons name="local-shipping" size={16} color="#666" />
-          <Text style={styles.deliveryMetaText}>
-            Delivery fee: ₹{cartData.deliveryFee}
-          </Text>
-        </View>
-      </View>
-    </Surface>
+    <AddressSelector
+      selectedAddress={selectedAddress}
+      onAddressChange={setSelectedAddress}
+    />
   );
 
   const renderEmptyCart = () => (
@@ -673,51 +654,7 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     color: '#155724' 
   },
-  deliveryCard: { 
-    margin: 20, 
-    padding: 24, 
-    borderRadius: 16, 
-    elevation: 4, 
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f3f4',
-  },
-  deliveryHeader: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 16 
-  },
-  deliveryTitle: { 
-    fontSize: 18, 
-    fontWeight: '700', 
-    color: '#2c3e50', 
-    marginLeft: 12, 
-    flex: 1 
-  },
-  deliveryAddress: { 
-    fontSize: 15, 
-    color: '#495057', 
-    lineHeight: 22, 
-    marginBottom: 16,
-    fontWeight: '500',
-  },
-  deliveryMeta: { 
-    gap: 12 
-  },
-  deliveryMetaItem: { 
-    flexDirection: 'row', 
-    alignItems: 'center' 
-  },
-  deliveryMetaText: { 
-    fontSize: 14, 
-    color: '#6c757d', 
-    marginLeft: 12,
-    fontWeight: '500',
-  },
+
   checkoutBar: {
     position: 'absolute',
     bottom: 0,
