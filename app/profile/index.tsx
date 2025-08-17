@@ -66,14 +66,8 @@ export default function ProfileScreen() {
       case 'navigation':
         if (section.route) {
           // Handle different routes
-          if (section.route === '/order-history') {
-            router.push('/order-history');
-          } else if (section.route === '/order-tracking') {
-            router.push('/order-tracking');
-          } else if (section.route === '/profile/addresses') {
+          if (section.route === '/profile/addresses') {
             router.push('/profile/addresses');
-          } else if (section.route === '/profile/payment-methods') {
-            router.push('/(tabs)/home');
           } else if (section.route === '/profile/favorites') {
             router.push('/(tabs)/home');
           } else {

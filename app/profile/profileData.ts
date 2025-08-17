@@ -133,7 +133,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'Manage payment options',
     icon: 'credit-card',
     type: 'navigation',
-    route: '/profile/payment-methods',
+    route: '/profile/payment',
     badge: '2',
   },
   {
@@ -142,7 +142,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'Quick access to your favorites',
     icon: 'favorite',
     type: 'navigation',
-    route: '/profile/favorites',
+    route: '/(tabs)/home',
     badge: '8',
   },
   
@@ -153,7 +153,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'View all your past orders',
     icon: 'history',
     type: 'navigation',
-    route: '/order-history',
+    route: '/(tabs)/orders',
     badge: '24',
   },
   {
@@ -162,7 +162,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'Monitor active deliveries',
     icon: 'location-searching',
     type: 'navigation',
-    route: '/order-tracking',
+    route: '/(tabs)/orders',
     badge: '2',
   },
   
