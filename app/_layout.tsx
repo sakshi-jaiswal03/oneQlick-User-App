@@ -17,6 +17,7 @@ export default function RootLayout() {
             <Stack.Screen name="restaurant" options={{ headerShown: false }} />
             <Stack.Screen name="checkout" options={{ headerShown: false }} />
             <Stack.Screen name="order-tracking" options={{ headerShown: false }} />
+            <Stack.Screen name="notifications" options={{ headerShown: false }} />
           </Stack>
           <StatusBar style="auto" />
         </SafeAreaProvider>

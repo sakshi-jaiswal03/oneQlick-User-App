@@ -19,8 +19,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   // Calculate cart badge count - use the actual cart items count for real-time updates
   const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
 
-  // Calculate orders badge count (mock data)
-  const ordersBadgeCount = user ? Math.floor(Math.random() * 5) : 0; // Mock pending orders
+  // No badge for orders tab
+  const ordersBadgeCount = 0;
 
   const handleTabPress = (route: any, isPressed: boolean) => {
     const { key } = route;
