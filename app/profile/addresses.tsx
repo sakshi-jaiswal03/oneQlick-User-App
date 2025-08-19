@@ -55,7 +55,7 @@ export default function AddressesScreen() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [deletingAddress, setDeletingAddress] = useState<Address | null>(null);
-  const [showTypeMenu, setShowTypeMenu] = useState(false);
+
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');

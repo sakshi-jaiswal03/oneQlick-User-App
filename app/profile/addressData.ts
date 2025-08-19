@@ -24,7 +24,7 @@ export interface Address {
 export interface AddressType {
   id: string;
   name: string;
-  icon: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
   color: string;
 }
 
@@ -138,7 +138,7 @@ export const deliveryAreas: DeliveryArea[] = [
 ];
 
 // Helper functions
-export const getAddressTypeIcon = (type: string): string => {
+export const getAddressTypeIcon = (type: string): keyof typeof MaterialIcons.glyphMap => {
   const addressType = addressTypes.find(t => t.id === type);
   return addressType?.icon || 'map-marker';
 };

@@ -1,10 +1,11 @@
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
 import React from 'react';
 import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import { Text, Surface, Badge } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useCart } from '../../hooks/useCart';
 
 interface HomeHeaderProps {
   userLocation: string;
@@ -14,10 +15,9 @@ interface HomeHeaderProps {
 
 export default function HomeHeader({ userLocation, onLocationPress, hasLocation = false }: HomeHeaderProps) {
   const router = useRouter();
-  const { cart } = useCart();
-
-  // Calculate cart badge count
-  const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
+  
+  // Mock notifications data - in real app, this would come from a hook or API
+  const [unreadNotifications, setUnreadNotifications] = useState(3);
 
   return (
     <Surface style={styles.header}>
@@ -66,15 +66,15 @@ export default function HomeHeader({ userLocation, onLocationPress, hasLocation 
 
           {/* Header Actions */}
           <View style={styles.headerActions}>
-            {/* Cart Button */}
+            {/* Notifications Button */}
             <Pressable
-              onPress={() => router.push('/(modals)/cart')}
-              style={styles.cartButton}
+              onPress={() => router.push('/notifications')}
+              style={styles.notificationButton}
             >
-              <MaterialIcons name="shopping-cart" size={24} color="#FF6B35" />
-              {cartBadgeCount > 0 && (
-                <Badge style={styles.cartBadge} size={18}>
-                  {cartBadgeCount}
+              <MaterialIcons name="notifications" size={24} color="#FF6B35" />
+              {unreadNotifications > 0 && (
+                <Badge style={styles.notificationBadge} size={18}>
+                  {unreadNotifications}
                 </Badge>
               )}
             </Pressable>
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  cartButton: {
+  notificationButton: {
     position: 'relative',
     width: 44,
     height: 44,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFE0B2',
   },
-  cartBadge: {
+  notificationBadge: {
     position: 'absolute',
     top: -6,
     right: -6,

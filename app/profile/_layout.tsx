@@ -29,36 +29,36 @@ export default function ProfileLayout() {
         }} 
       />
       <Stack.Screen 
+        name="addEditAddress" 
+        options={{ 
+          title: 'Add/Edit Address',
+          headerShown: true,
+          headerStyle: { backgroundColor: '#FF6B35' },
+          headerTintColor: 'white'
+        }} 
+      />
+      <Stack.Screen 
+        name="MapPicker" 
+        options={{ 
+          title: 'Select Location',
+          headerShown: true,
+          headerStyle: { backgroundColor: '#FF6B35' },
+          headerTintColor: 'white'
+        }} 
+      />
+      <Stack.Screen 
+        name="change-password" 
+        options={{ 
+          title: 'Change Password',
+          headerShown: true,
+          headerStyle: { backgroundColor: '#FF6B35' },
+          headerTintColor: 'white'
+        }} 
+      />
+      <Stack.Screen 
         name="payment" 
         options={{ 
           title: 'Payment Methods',
-          headerShown: true,
-          headerStyle: { backgroundColor: '#FF6B35' },
-          headerTintColor: 'white'
-        }} 
-      />
-      <Stack.Screen 
-        name="settings" 
-        options={{ 
-          title: 'Settings',
-          headerShown: true,
-          headerStyle: { backgroundColor: '#FF6B35' },
-          headerTintColor: 'white'
-        }} 
-      />
-      <Stack.Screen 
-        name="help" 
-        options={{ 
-          title: 'Help & Support',
-          headerShown: true,
-          headerStyle: { backgroundColor: '#FF6B35' },
-          headerTintColor: 'white'
-        }} 
-      />
-      <Stack.Screen 
-        name="about" 
-        options={{ 
-          title: 'About oneQlick',
           headerShown: true,
           headerStyle: { backgroundColor: '#FF6B35' },
           headerTintColor: 'white'

@@ -1,3 +1,5 @@
+import { MaterialIcons } from '@expo/vector-icons';
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -18,7 +20,7 @@ export interface ProfileSection {
   title: string;
   subtitle?: string;
   description?: string;
-  icon: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
   type: 'navigation' | 'toggle' | 'select' | 'action';
   route?: string;
   value?: string | boolean;
@@ -129,9 +131,9 @@ export const profileSections: ProfileSection[] = [
     id: 'payment-methods',
     title: 'Payment Methods',
     subtitle: 'Manage payment options',
-    icon: 'payment',
+    icon: 'credit-card',
     type: 'navigation',
-    route: '/profile/payment-methods',
+    route: '/profile/payment',
     badge: '2',
   },
   {
@@ -140,7 +142,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'Quick access to your favorites',
     icon: 'favorite',
     type: 'navigation',
-    route: '/profile/favorites',
+    route: '/(tabs)/home',
     badge: '8',
   },
   
@@ -151,7 +153,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'View all your past orders',
     icon: 'history',
     type: 'navigation',
-    route: '/order-history',
+    route: '/(tabs)/orders',
     badge: '24',
   },
   {
@@ -160,7 +162,7 @@ export const profileSections: ProfileSection[] = [
     subtitle: 'Monitor active deliveries',
     icon: 'location-searching',
     type: 'navigation',
-    route: '/order-tracking',
+    route: '/(tabs)/orders',
     badge: '2',
   },
   
@@ -189,29 +191,13 @@ export const profileSections: ProfileSection[] = [
     type: 'toggle',
     value: false,
   },
-  {
-    id: 'marketing-emails',
-    title: 'Marketing Emails',
-    description: 'Receive promotional emails',
-    icon: 'email',
-    type: 'toggle',
-    value: false,
-  },
   
   // Support Section
-  {
-    id: 'help-center',
-    title: 'Help Center',
-    subtitle: 'Find answers to common questions',
-    icon: 'help',
-    type: 'navigation',
-    route: '/support/help',
-  },
   {
     id: 'contact-us',
     title: 'Contact Us',
     subtitle: 'Get in touch with our team',
-    icon: 'contact-support',
+    icon: 'support-agent',
     type: 'navigation',
     route: '/support/contact',
   },
@@ -232,14 +218,6 @@ export const profileSections: ProfileSection[] = [
     type: 'select',
     value: 'English',
     options: ['English', 'Hindi', 'Gujarati', 'Marathi'],
-  },
-  {
-    id: 'dark-mode',
-    title: 'Dark Mode',
-    description: 'Switch between light and dark themes',
-    icon: 'dark-mode',
-    type: 'toggle',
-    value: false,
   },
   {
     id: 'location-services',
@@ -468,40 +446,6 @@ export const appSettings: AppSetting[] = [
 ];
 
 // Helper functions
-export const getProfileCompletionColor = (completion: number): string => {
-  if (completion >= 80) return '#4CAF50';
-  if (completion >= 60) return '#FF9800';
-  return '#F44336';
-};
-
-export const getProfileCompletionText = (completion: number): string => {
-  if (completion >= 80) return 'Excellent';
-  if (completion >= 60) return 'Good';
-  return 'Needs Improvement';
-};
-
-export const formatMemberSince = (dateString: string): string => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  
-  if (diffDays === 1) {
-    return '1 day';
-  } else if (diffDays < 7) {
-    return `${diffDays} days`;
-  } else if (diffDays < 30) {
-    const weeks = Math.floor(diffDays / 7);
-    return `${weeks} week${weeks > 1 ? 's' : ''}`;
-  } else if (diffDays < 365) {
-    const months = Math.floor(diffDays / 30);
-    return `${months} month${months > 1 ? 's' : ''}`;
-  } else {
-    const years = Math.floor(diffDays / 365);
-    return `${years} year${years > 1 ? 's' : ''}`;
-  }
-};
-
 export const getAddressTypeIcon = (type: string): string => {
   switch (type) {
     case 'home': return 'home';
@@ -529,9 +473,6 @@ export default {
   paymentMethods,
   notificationSettings,
   appSettings,
-  getProfileCompletionColor,
-  getProfileCompletionText,
-  formatMemberSince,
   getAddressTypeIcon,
   getPaymentTypeIcon,
 }; 

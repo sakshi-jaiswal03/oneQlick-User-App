@@ -9,9 +9,9 @@ import { Surface } from 'react-native-paper';
 
 // Custom tab bar component with badges and animations
 function CustomTabBar({ state, descriptors, navigation }: any) {
-  const insets = useSafeAreaInsets();
-  const { cart } = useCart();
-  const { user } = useAuth();
+  const insets = useSafeAreaInsets(); 
+  const { cart } = useCart(); 
+  const { user } = useAuth(); 
   
   // Animation values for tab press feedback
   const tabAnimations = state.routes.map(() => new Animated.Value(1));
@@ -19,8 +19,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
   // Calculate cart badge count - use the actual cart items count for real-time updates
   const cartBadgeCount = cart.items.reduce((total, item) => total + (item.quantity || 1), 0);
 
-  // Calculate orders badge count (mock data)
-  const ordersBadgeCount = user ? Math.floor(Math.random() * 5) : 0; // Mock pending orders
+  // No badge for orders tab
+  const ordersBadgeCount = 0;
 
   const handleTabPress = (route: any, isPressed: boolean) => {
     const { key } = route;
@@ -53,7 +53,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         const isFocused = state.index === index;
 
         let icon;
-        let badgeCount = 0;
+        let badgeCount = 0; 
 
         // Set icon and badge count based on route name
         switch (route.name) {
@@ -65,26 +65,26 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             break;
           case 'cart':
             icon = 'shopping-cart';
-            badgeCount = cartBadgeCount;
+            badgeCount = cartBadgeCount; 
             break;
-          case 'orders':
-            icon = 'receipt';
-            badgeCount = ordersBadgeCount;
+          case 'orders': 
+            icon = 'receipt'; 
+            badgeCount = ordersBadgeCount; 
             break;
-          case 'profile':
+          case 'profile': 
             icon = 'person';
             break;
           default:
-            icon = 'circle';
+            icon = 'circle'; 
         }
 
         return (
-          <Pressable
+          <Pressable 
             key={`${route.key}-${cartBadgeCount}`} // Force re-render when cart changes
             style={[styles.tab, isFocused && styles.tabFocused]}
             onPress={() => handleTabPress(route, false)}
             onPressIn={() => handleTabPress(route, true)}
-          >
+          > 
             <Animated.View style={[styles.tabContent, { transform: [{ scale: tabAnimations[index] }] }]}>
               <View style={styles.iconContainer}>
                 <MaterialIcons

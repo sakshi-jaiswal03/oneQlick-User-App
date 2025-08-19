@@ -6,7 +6,6 @@ import {
   Pressable,
   Animated,
   Alert,
-  Linking,
   Share,
 } from 'react-native';
 import {
@@ -15,11 +14,7 @@ import {
   Button,
   IconButton,
   Switch,
-  Divider,
   Menu,
-  List,
-  Avatar,
-  ProgressBar,
   Chip,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -28,9 +23,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import {
   userProfile,
   profileSections,
-  getProfileCompletionColor,
-  getProfileCompletionText,
-  formatMemberSince,
 } from './profileData';
 
 export default function ProfileScreen() {
@@ -39,17 +31,14 @@ export default function ProfileScreen() {
   // State management
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('English');
-  const [darkMode, setDarkMode] = useState(false);
   const [locationServices, setLocationServices] = useState(true);
   const [orderUpdates, setOrderUpdates] = useState(true);
   const [offersPromotions, setOffersPromotions] = useState(true);
   const [appNotifications, setAppNotifications] = useState(false);
-  const [marketingEmails, setMarketingEmails] = useState(false);
   
   // Animation values
   const headerAnim = useRef(new Animated.Value(0)).current;
   const contentAnim = useRef(new Animated.Value(0)).current;
-  const profilePhotoAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Start animations
@@ -70,17 +59,6 @@ export default function ProfileScreen() {
       duration: 1000, 
       useNativeDriver: true 
     }).start();
-    
-    // Profile photo scale animation
-    Animated.sequence([
-      Animated.delay(400),
-      Animated.spring(profilePhotoAnim, { 
-        toValue: 1, 
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }),
-    ]).start();
   };
 
   const handleSectionPress = (section: any) => {
@@ -88,14 +66,8 @@ export default function ProfileScreen() {
       case 'navigation':
         if (section.route) {
           // Handle different routes
-          if (section.route === '/order-history') {
-            router.push('/order-history');
-          } else if (section.route === '/order-tracking') {
-            router.push('/order-tracking');
-          } else if (section.route === '/profile/addresses') {
+          if (section.route === '/profile/addresses') {
             router.push('/profile/addresses');
-          } else if (section.route === '/profile/payment-methods') {
-            router.push('/(tabs)/home');
           } else if (section.route === '/profile/favorites') {
             router.push('/(tabs)/home');
           } else {
@@ -108,6 +80,8 @@ export default function ProfileScreen() {
       case 'action':
         if (section.id === 'rate-app') {
           handleRateApp();
+        } else if (section.id === 'share-app') {
+          handleShareApp();
         }
         break;
       
@@ -136,6 +110,13 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleShareApp = () => {
+    Share.share({
+      message: 'Check out oneQlick - the best food delivery app! Download now.',
+      title: 'oneQlick Food Delivery',
+    });
+  };
+
   const handleLogout = () => {
     Alert.alert(
       'Logout',
@@ -148,41 +129,6 @@ export default function ProfileScreen() {
           onPress: () => {
             // TODO: Implement logout functionality
             Alert.alert('Logged Out', 'You have been successfully logged out.');
-          }
-        },
-      ]
-    );
-  };
-
-  const handleShareApp = () => {
-    Share.share({
-      message: 'Check out oneQlick - the best food delivery app! Download now.',
-      title: 'oneQlick Food Delivery',
-    });
-  };
-
-  const handleContactSupport = () => {
-    Alert.alert(
-      'Contact Support',
-      'Choose how you\'d like to contact us:',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Call Support', 
-          onPress: () => {
-            Linking.openURL('tel:+91-1800-123-4567');
-          }
-        },
-        { 
-          text: 'Email Support', 
-          onPress: () => {
-            Linking.openURL('mailto:support@oneqlick.com');
-          }
-        },
-        { 
-          text: 'Live Chat', 
-          onPress: () => {
-            Alert.alert('Live Chat', 'Live chat feature coming soon!');
           }
         },
       ]
@@ -203,97 +149,11 @@ export default function ProfileScreen() {
         },
       ]}
     >
-      {/* Profile photo */}
-      <Animated.View 
-        style={[
-          styles.profilePhotoContainer,
-          {
-            transform: [{
-              scale: profilePhotoAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.5, 1],
-              }),
-            }],
-          },
-        ]}
-      >
-        <Avatar.Image
-          size={80}
-          source={userProfile.profilePhoto ? { uri: userProfile.profilePhoto } : require('../../assets/icon.png')}
-          style={styles.profilePhoto}
-        />
-        <IconButton
-          icon="camera-alt"
-          size={20}
-          iconColor="white"
-          style={styles.editPhotoButton}
-          onPress={() => Alert.alert('Profile Photo', 'Photo upload feature coming soon!')}
-        />
-      </Animated.View>
-      
       {/* User info */}
       <View style={styles.userInfo}>
         <Text style={styles.userName}>{userProfile.name}</Text>
         <Text style={styles.userEmail}>{userProfile.email}</Text>
         <Text style={styles.userPhone}>{userProfile.phone}</Text>
-        
-        {/* Verification badges */}
-        <View style={styles.verificationBadges}>
-          {userProfile.isEmailVerified && (
-            <Chip mode="flat" textStyle={{ color: 'white' }} style={styles.verifiedChip} compact>
-              <MaterialIcons name="verified" size={16} color="white" />
-              Email Verified
-            </Chip>
-          )}
-          {userProfile.isPhoneVerified && (
-            <Chip mode="flat" textStyle={{ color: 'white' }} style={styles.verifiedChip} compact>
-              <MaterialIcons name="verified" size={16} color="white" />
-              Phone Verified
-            </Chip>
-          )}
-        </View>
-      </View>
-      
-      {/* Profile completion */}
-      <View style={styles.profileCompletion}>
-        <View style={styles.completionHeader}>
-          <Text style={styles.completionTitle}>Profile Completion</Text>
-          <Text style={styles.completionPercentage}>{userProfile.profileCompletion}%</Text>
-        </View>
-        <ProgressBar
-          progress={userProfile.profileCompletion / 100}
-          color={getProfileCompletionColor(userProfile.profileCompletion)}
-          style={styles.completionBar}
-        />
-        <Text style={styles.completionText}>
-          {getProfileCompletionText(userProfile.profileCompletion)}
-        </Text>
-      </View>
-      
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{userProfile.totalOrders}</Text>
-          <Text style={styles.statLabel}>Orders</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>₹{userProfile.totalSpent.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Spent</Text>
-        </View>
-        <View style={styles.statDivider} />
-        <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{userProfile.loyaltyPoints}</Text>
-          <Text style={styles.statLabel}>Points</Text>
-        </View>
-      </View>
-      
-      {/* Member since */}
-      <View style={styles.memberSince}>
-        <MaterialIcons name="star" size={16} color="#FFD700" />
-        <Text style={styles.memberSinceText}>
-          Member since {userProfile.memberSince} ({formatMemberSince(userProfile.memberSince)})
-        </Text>
       </View>
     </Animated.View>
   );
@@ -307,7 +167,7 @@ export default function ProfileScreen() {
       <Surface style={styles.sectionSurface}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
-            <MaterialIcons name={section.icon as any} size={24} color="#666" />
+            <MaterialIcons name={section.icon} size={24} color="#666" />
           </View>
           
           <View style={styles.sectionContent}>
@@ -342,12 +202,6 @@ export default function ProfileScreen() {
                     case 'app-notifications':
                       setAppNotifications(value);
                       break;
-                    case 'marketing-emails':
-                      setMarketingEmails(value);
-                      break;
-                    case 'dark-mode':
-                      setDarkMode(value);
-                      break;
                     case 'location-services':
                       setLocationServices(value);
                       break;
@@ -368,41 +222,6 @@ export default function ProfileScreen() {
         </View>
       </Surface>
     </Pressable>
-  );
-
-  const renderQuickActions = () => (
-    <View style={styles.quickActions}>
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
-      <View style={styles.actionButtons}>
-        <Button
-          mode="outlined"
-          onPress={handleShareApp}
-          icon="share"
-          style={styles.actionButton}
-          compact
-        >
-          Share App
-        </Button>
-        <Button
-          mode="outlined"
-          onPress={handleContactSupport}
-          icon="support-agent"
-          style={styles.actionButton}
-          compact
-        >
-          Support
-        </Button>
-        <Button
-          mode="outlined"
-          onPress={() => Alert.alert('Help', 'Help center coming soon!')}
-          icon="help"
-          style={styles.actionButton}
-          compact
-        >
-          Help
-        </Button>
-      </View>
-    </View>
   );
 
   const renderAppInfo = () => (
@@ -455,7 +274,7 @@ export default function ProfileScreen() {
           <View style={styles.sectionGroup}>
             <Text style={styles.sectionGroupTitle}>Notifications</Text>
             {profileSections
-              .filter(section => ['order-updates', 'offers-promotions', 'app-notifications', 'marketing-emails'].includes(section.id))
+              .filter(section => ['order-updates', 'offers-promotions', 'app-notifications'].includes(section.id))
               .map(renderProfileSection)}
           </View>
           
@@ -463,7 +282,7 @@ export default function ProfileScreen() {
           <View style={styles.sectionGroup}>
             <Text style={styles.sectionGroupTitle}>Support</Text>
             {profileSections
-              .filter(section => ['help-center', 'contact-us', 'rate-app'].includes(section.id))
+              .filter(section => ['contact-us', 'rate-app'].includes(section.id))
               .map(renderProfileSection)}
           </View>
           
@@ -471,12 +290,35 @@ export default function ProfileScreen() {
           <View style={styles.sectionGroup}>
             <Text style={styles.sectionGroupTitle}>Settings</Text>
             {profileSections
-              .filter(section => ['language', 'dark-mode', 'location-services', 'data-usage'].includes(section.id))
+              .filter(section => ['language', 'location-services', 'data-usage'].includes(section.id))
               .map(renderProfileSection)}
           </View>
           
-          {/* Quick Actions */}
-          {renderQuickActions()}
+          {/* Share App Section */}
+          <View style={styles.sectionGroup}>
+            <Text style={styles.sectionGroupTitle}>App</Text>
+            <Pressable
+              style={styles.sectionItem}
+              onPress={handleShareApp}
+            >
+              <Surface style={styles.sectionSurface}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionIcon}>
+                    <MaterialIcons name="share" size={24} color="#666" />
+                  </View>
+                  
+                  <View style={styles.sectionContent}>
+                    <Text style={styles.sectionTitle}>Share App</Text>
+                    <Text style={styles.sectionSubtitle}>Share oneQlick with friends & family</Text>
+                  </View>
+                  
+                  <View style={styles.sectionActions}>
+                    <MaterialIcons name="chevron-right" size={24} color="#ccc" />
+                  </View>
+                </View>
+              </Surface>
+            </Pressable>
+          </View>
           
           {/* App Info */}
           {renderAppInfo()}
@@ -549,21 +391,6 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  // Header Styles
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    elevation: 2,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   
   // Profile Header Styles
   profileHeader: {
@@ -575,25 +402,8 @@ const styles = StyleSheet.create({
     elevation: 1,
     borderRadius: 0,
   },
-  profilePhotoContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  profilePhoto: {
-    borderWidth: 3,
-    borderColor: '#FF6B35',
-    elevation: 4,
-  },
-  editPhotoButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#FF6B35',
-    borderRadius: 15,
-  },
   userInfo: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   userName: {
     fontSize: 24,
@@ -614,95 +424,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: 'center',
   },
-  verificationBadges: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  verifiedChip: {
-    backgroundColor: '#4CAF50',
-  },
-  profileCompletion: {
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B35',
-  },
-  completionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  completionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  completionPercentage: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF6B35',
-  },
-  completionBar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#e9ecef',
-    marginBottom: 8,
-  },
-  completionText: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: '#dee2e6',
-  },
-  memberSince: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff3cd',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ffeaa7',
-  },
-  memberSinceText: {
-    fontSize: 14,
-    color: '#856404',
-    marginLeft: 8,
-  },
+  
   content: {
     padding: 20,
-    paddingTop: 0, // No need for extra padding since header is not absolute
+    paddingTop: 0,
   },
   sectionGroup: {
     marginBottom: 20,
@@ -765,18 +490,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  quickActions: {
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  actionButton: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
+  
   appInfo: {
     alignItems: 'center',
     paddingVertical: 20,

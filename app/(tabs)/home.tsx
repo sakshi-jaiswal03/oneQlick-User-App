@@ -33,6 +33,7 @@ import {
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
   const [userLocation, setUserLocation] = useState('Rajpur Village, Haridwar, UK');
   const [currentCoordinates, setCurrentCoordinates] = useState<{latitude: number, longitude: number} | null>(null);
