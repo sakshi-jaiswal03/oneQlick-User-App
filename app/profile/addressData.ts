@@ -1,4 +1,4 @@
-import * as Location from 'expo-location';
+import { getCurrentLocation, getDistanceFromCurrentLocation } from '../../utils/locationUtils';
 
 export interface Address {
   id: string;
@@ -207,49 +207,7 @@ export const calculateDistance = (
   return Math.round(distance * 10) / 10; // Round to 1 decimal place
 };
 
-export const getDistanceFromCurrentLocation = async (
-  addressLat: number,
-  addressLon: number
-): Promise<number> => {
-  try {
-    const currentLocation = await getCurrentLocation();
-    return calculateDistance(
-      currentLocation.latitude,
-      currentLocation.longitude,
-      addressLat,
-      addressLon
-    );
-  } catch (error) {
-    console.error('Error calculating distance:', error);
-    return 0; // Return 0 if we can't get current location
-  }
-};
 
-export const getCurrentLocation = async (): Promise<{latitude: number, longitude: number}> => {
-  try {
-    // Request location permissions
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    
-    if (status !== 'granted') {
-      throw new Error('Location permission denied');
-    }
-
-    // Get current position
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-      timeInterval: 5000,
-      distanceInterval: 10,
-    });
-
-    return {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
-    };
-  } catch (error) {
-    console.error('Error getting location:', error);
-    throw error;
-  }
-};
 
 export const searchNearbyPlaces = async (
   query: string,

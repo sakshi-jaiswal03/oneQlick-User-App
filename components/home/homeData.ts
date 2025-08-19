@@ -1,14 +1,5 @@
 import { FoodItem } from '../../types';
 
-export interface PromotionalBanner {
-  id: string;
-  title: string;
-  subtitle: string;
-  image: string;
-  offerText: string;
-  backgroundColor: string;
-}
-
 export interface FoodCategory {
   id: string;
   name: string;
@@ -38,41 +29,7 @@ export interface QuickReorder {
   totalAmount: number;
 }
 
-// Promotional banners with Unsplash images
-export const promotionalBanners: PromotionalBanner[] = [
-  {
-    id: '1',
-    title: 'Diwali Special',
-    subtitle: 'Get 50% OFF on sweets',
-    image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=200&fit=crop&crop=center',
-    offerText: '50% OFF',
-    backgroundColor: '#FF6B35',
-  },
-  {
-    id: '2',
-    title: 'Free Delivery',
-    subtitle: 'On orders above ₹200',
-    image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=200&fit=crop&crop=center',
-    offerText: 'FREE',
-    backgroundColor: '#4CAF50',
-  },
-  {
-    id: '3',
-    title: 'New User Bonus',
-    subtitle: '₹100 OFF on first order',
-    image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=200&fit=crop&crop=center',
-    offerText: '₹100 OFF',
-    backgroundColor: '#2196F3',
-  },
-  {
-    id: '4',
-    title: 'Weekend Special',
-    subtitle: 'Buy 1 Get 1 on selected items',
-    image: 'https://images.unsplash.com/photo-1504674900242-87fec7f58d7e?w=400&h=200&fit=crop&crop=center',
-    offerText: 'B1G1',
-    backgroundColor: '#FF9800',
-  },
-];
+
 
 // Food categories
 export const foodCategories: FoodCategory[] = [
