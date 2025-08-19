@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Alert } from 'react-native';
 import { Text, Surface, Badge } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,9 +9,10 @@ import { useCart } from '../../hooks/useCart';
 interface HomeHeaderProps {
   userLocation: string;
   onLocationPress: () => void;
+  hasLocation?: boolean;
 }
 
-export default function HomeHeader({ userLocation, onLocationPress }: HomeHeaderProps) {
+export default function HomeHeader({ userLocation, onLocationPress, hasLocation = false }: HomeHeaderProps) {
   const router = useRouter();
   const { cart } = useCart();
 
@@ -23,9 +24,37 @@ export default function HomeHeader({ userLocation, onLocationPress }: HomeHeader
       <SafeAreaView edges={['top']}>
         <View style={styles.headerContent}>
           {/* Location Section */}
-          <Pressable style={styles.locationSection} onPress={onLocationPress}>
+          <Pressable 
+            style={({ pressed }) => [
+              styles.locationSection,
+              pressed && styles.locationSectionPressed
+            ]}
+            onPress={() => {
+              Alert.alert(
+                'Edit Location',
+                'Choose how you want to set your location:',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Use Current Location', onPress: onLocationPress },
+                  { text: 'Enter Manually', onPress: () => {
+                    Alert.alert('Manual Input', 'Manual location input coming soon!');
+                  }},
+                  { text: 'Pick from Map', onPress: () => {
+                    Alert.alert('Map Picker', 'Map location picker coming soon!');
+                  }}
+                ]
+              );
+            }}
+          >
             <View style={styles.locationIcon}>
-              <MaterialIcons name="location-on" size={20} color="#FF6B35" />
+              <MaterialIcons 
+                name="location-on" 
+                size={20} 
+                color="#FF6B35" 
+              />
+              {hasLocation && (
+                <View style={styles.locationIndicator} />
+              )}
             </View>
             <View style={styles.locationInfo}>
               <Text style={styles.deliveryText}>Deliver to</Text>
@@ -33,7 +62,6 @@ export default function HomeHeader({ userLocation, onLocationPress }: HomeHeader
                 {userLocation}
               </Text>
             </View>
-            <MaterialIcons name="keyboard-arrow-down" size={20} color="#666" />
           </Pressable>
 
           {/* Header Actions */}
@@ -85,10 +113,25 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
+  },
+  locationSectionPressed: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
   },
   locationIcon: {
     marginRight: 8,
+    position: 'relative',
+  },
+  locationIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#4CAF50',
+    borderWidth: 1,
+    borderColor: 'white',
   },
   locationInfo: {
     flex: 1,
@@ -105,6 +148,8 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '600',
   },
+
+
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',

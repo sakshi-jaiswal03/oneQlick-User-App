@@ -38,11 +38,10 @@ import {
   formatShortAddress,
   validatePincode,
   validateDeliveryArea,
-  getCurrentLocation,
-  getDistanceFromCurrentLocation,
   Address,
   AddressType,
 } from './addressData';
+import { getCurrentLocation, getDistanceFromCurrentLocation } from '../../utils/locationUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -98,8 +97,8 @@ export default function AddressesScreen() {
     // Get current location and update distances
     const initializeLocation = async () => {
       try {
-        const location = await getCurrentLocation();
-        setCurrentLocation(location);
+        const locationData = await getCurrentLocation();
+        setCurrentLocation(locationData.coordinates);
         
         // Update distances for all addresses
         const updatedAddresses = await Promise.all(
@@ -288,8 +287,8 @@ export default function AddressesScreen() {
       // Show loading state
       setIsLocationLoading(true);
       
-      const location = await getCurrentLocation();
-      setCurrentLocation(location);
+      const locationData = await getCurrentLocation();
+      setCurrentLocation(locationData.coordinates);
       
       // Update distances for all addresses
       const updatedAddresses = await Promise.all(
@@ -306,7 +305,7 @@ export default function AddressesScreen() {
       );
       
       setAddresses(updatedAddresses);
-      Alert.alert('Success', `Location detected! Your coordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`);
+      Alert.alert('Success', `Location detected! Your coordinates: ${locationData.coordinates.latitude.toFixed(6)}, ${locationData.coordinates.longitude.toFixed(6)}`);
     } catch (error) {
       console.error('Location error:', error);
       if (error instanceof Error && error.message.includes('permission')) {

@@ -39,8 +39,8 @@ import {
   getStateForCity,
   getAreasForCity,
   getAddressTypeInfo,
-  getCurrentLocation,
 } from './addressFormData';
+import { getLocationForAddressForm } from '../../utils/locationUtils';
 import { PhoneNumberInput } from '../../components/common';
 import { CountryCode } from '../../utils/countryCodes';
 import { isValidPhoneWithCountry } from '../../utils/helpers';
@@ -166,35 +166,49 @@ export default function AddEditAddressScreen() {
   const handleUseCurrentLocation = async () => {
     setIsLoading(true);
     try {
-      const location = await getCurrentLocation();
+      const { locationData, formData: locationFormData } = await getLocationForAddressForm();
       
       setFormData(prev => ({
         ...prev,
-        city: location.city,
-        state: location.state,
-        pincode: location.pincode,
-        area: location.area,
+        city: locationFormData.city,
+        state: locationFormData.state,
+        pincode: locationFormData.pincode || '',
+        area: locationFormData.area,
         coordinates: {
-          latitude: location.latitude,
-          longitude: location.longitude,
+          latitude: locationData.coordinates.latitude,
+          longitude: locationData.coordinates.longitude,
         },
       }));
       
       validateFormData({
         ...formData,
-        city: location.city,
-        state: location.state,
-        pincode: location.pincode,
-        area: location.area,
+        city: locationFormData.city,
+        state: locationFormData.state,
+        pincode: locationFormData.pincode || '',
+        area: locationFormData.area,
         coordinates: {
-          latitude: location.latitude,
-          longitude: location.longitude,
+          latitude: locationData.coordinates.latitude,
+          longitude: locationData.coordinates.longitude,
         },
       });
       
-      Alert.alert('Success', 'Current location detected and address auto-filled!');
+      Alert.alert('Success', `Current location detected!\n\nAddress: ${locationData.displayName}\n\nForm auto-filled with detected location.`);
     } catch (error) {
-      Alert.alert('Error', 'Could not detect current location. Please check your GPS settings.');
+      console.error('Location error:', error);
+      if (error instanceof Error && error.message.includes('permission')) {
+        Alert.alert(
+          'Location Permission Required',
+          'Please enable location permissions in your device settings to use this feature.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => {
+              Alert.alert('Settings', 'Please go to your device settings and enable location permissions for this app.');
+            }}
+          ]
+        );
+      } else {
+        Alert.alert('Location Error', 'Could not detect your current location. Please check your GPS settings and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
