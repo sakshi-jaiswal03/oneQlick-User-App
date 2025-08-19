@@ -1,3 +1,4 @@
+import { MaterialIcons } from '@expo/vector-icons';
 import { getCurrentLocation, getDistanceFromCurrentLocation } from '../../utils/locationUtils';
 
 export interface Address {
@@ -46,13 +47,13 @@ export const addressTypes: AddressType[] = [
   {
     id: 'office',
     name: 'Office',
-    icon: 'briefcase',
+    icon: 'work',
     color: '#2196F3',
   },
   {
     id: 'other',
     name: 'Other',
-    icon: 'map-marker',
+    icon: 'location-on',
     color: '#FF9800',
   },
 ];
@@ -140,7 +141,7 @@ export const deliveryAreas: DeliveryArea[] = [
 // Helper functions
 export const getAddressTypeIcon = (type: string): keyof typeof MaterialIcons.glyphMap => {
   const addressType = addressTypes.find(t => t.id === type);
-  return addressType?.icon || 'map-marker';
+  return addressType?.icon || 'location-on';
 };
 
 export const getAddressTypeColor = (type: string): string => {
