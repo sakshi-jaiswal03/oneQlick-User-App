@@ -1,4 +1,4 @@
-import { MaterialIcons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 export interface Address {
   id: string;
@@ -46,13 +46,13 @@ export const addressTypes: AddressType[] = [
   {
     id: 'office',
     name: 'Office',
-    icon: 'work',
+    icon: 'briefcase',
     color: '#2196F3',
   },
   {
     id: 'other',
     name: 'Other',
-    icon: 'location-on',
+    icon: 'map-marker',
     color: '#FF9800',
   },
 ];
@@ -140,7 +140,7 @@ export const deliveryAreas: DeliveryArea[] = [
 // Helper functions
 export const getAddressTypeIcon = (type: string): keyof typeof MaterialIcons.glyphMap => {
   const addressType = addressTypes.find(t => t.id === type);
-  return addressType?.icon || 'location-on';
+  return addressType?.icon || 'map-marker';
 };
 
 export const getAddressTypeColor = (type: string): string => {
@@ -207,17 +207,48 @@ export const calculateDistance = (
   return Math.round(distance * 10) / 10; // Round to 1 decimal place
 };
 
-export const getCurrentLocation = (): Promise<{latitude: number, longitude: number}> => {
-  return new Promise((resolve, reject) => {
-    // Simulate GPS location detection
-    setTimeout(() => {
-      // Default to Haridwar coordinates
-      resolve({
-        latitude: 29.9457,
-        longitude: 78.1642,
-      });
-    }, 1000);
-  });
+export const getDistanceFromCurrentLocation = async (
+  addressLat: number,
+  addressLon: number
+): Promise<number> => {
+  try {
+    const currentLocation = await getCurrentLocation();
+    return calculateDistance(
+      currentLocation.latitude,
+      currentLocation.longitude,
+      addressLat,
+      addressLon
+    );
+  } catch (error) {
+    console.error('Error calculating distance:', error);
+    return 0; // Return 0 if we can't get current location
+  }
+};
+
+export const getCurrentLocation = async (): Promise<{latitude: number, longitude: number}> => {
+  try {
+    // Request location permissions
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    
+    if (status !== 'granted') {
+      throw new Error('Location permission denied');
+    }
+
+    // Get current position
+    const location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
+      timeInterval: 5000,
+      distanceInterval: 10,
+    });
+
+    return {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    };
+  } catch (error) {
+    console.error('Error getting location:', error);
+    throw error;
+  }
 };
 
 export const searchNearbyPlaces = async (

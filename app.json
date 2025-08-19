@@ -16,7 +16,11 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.oneqlick.app"
+      "bundleIdentifier": "com.oneqlick.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to location to show nearby addresses and calculate delivery distances.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "This app needs access to location to show nearby addresses and calculate delivery distances."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -37,7 +41,8 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-location"
     ],
     "scheme": "oneqlick",
     "experiments": {

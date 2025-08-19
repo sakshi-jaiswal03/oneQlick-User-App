@@ -23,7 +23,7 @@ export default function ProfileLayout() {
         name="addresses" 
         options={{ 
           title: 'My Addresses',
-          headerShown: true,
+          headerShown: false,
           headerStyle: { backgroundColor: '#FF6B35' },
           headerTintColor: 'white'
         }} 

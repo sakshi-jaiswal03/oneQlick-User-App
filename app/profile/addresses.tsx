@@ -7,6 +7,7 @@ import {
   Animated,
   Alert,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import {
   Text,
@@ -22,10 +23,11 @@ import {
   List,
   Switch,
   Menu,
+  Badge,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+
 import {
   sampleAddresses,
   addressTypes,
@@ -37,6 +39,7 @@ import {
   validatePincode,
   validateDeliveryArea,
   getCurrentLocation,
+  getDistanceFromCurrentLocation,
   Address,
   AddressType,
 } from './addressData';
@@ -56,6 +59,9 @@ export default function AddressesScreen() {
   const [deletingAddress, setDeletingAddress] = useState<Address | null>(null);
 
   const [currentLocation, setCurrentLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState<string>('all');
+  const [isLocationLoading, setIsLocationLoading] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState<{
@@ -83,26 +89,68 @@ export default function AddressesScreen() {
   // Animation values
   const listAnim = useRef(new Animated.Value(0)).current;
   const fabAnim = useRef(new Animated.Value(0)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const searchAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Start animations
     startAnimations();
     
-    // Get current location
-    getCurrentLocation().then(setCurrentLocation);
+    // Get current location and update distances
+    const initializeLocation = async () => {
+      try {
+        const location = await getCurrentLocation();
+        setCurrentLocation(location);
+        
+        // Update distances for all addresses
+        const updatedAddresses = await Promise.all(
+          addresses.map(async (address) => {
+            if (address.coordinates) {
+              const distance = await getDistanceFromCurrentLocation(
+                address.coordinates.latitude,
+                address.coordinates.longitude
+              );
+              return { ...address, distance };
+            }
+            return address;
+          })
+        );
+        
+        setAddresses(updatedAddresses);
+      } catch (error) {
+        console.log('Location not available on app start:', error);
+        // Don't show error on app start, user can manually request location
+      }
+    };
+    
+    initializeLocation();
   }, []);
 
   const startAnimations = () => {
-    // List fade in animation
-    Animated.timing(listAnim, { 
+    // Header slide down animation
+    Animated.timing(headerAnim, { 
+      toValue: 1, 
+      duration: 600, 
+      useNativeDriver: true 
+    }).start();
+    
+    // Search bar fade in
+    Animated.timing(searchAnim, { 
       toValue: 1, 
       duration: 800, 
       useNativeDriver: true 
     }).start();
     
+    // List fade in animation
+    Animated.timing(listAnim, { 
+      toValue: 1, 
+      duration: 1000, 
+      useNativeDriver: true 
+    }).start();
+    
     // FAB bounce animation
     Animated.sequence([
-      Animated.delay(500),
+      Animated.delay(800),
       Animated.spring(fabAnim, { 
         toValue: 1, 
         useNativeDriver: true,
@@ -238,23 +286,256 @@ export default function AddressesScreen() {
 
   const handleUseCurrentLocation = async () => {
     try {
+      // Show loading state
+      setIsLocationLoading(true);
+      
       const location = await getCurrentLocation();
       setCurrentLocation(location);
-      Alert.alert('Success', 'Current location detected!');
+      
+      // Update distances for all addresses
+      const updatedAddresses = await Promise.all(
+        addresses.map(async (address) => {
+          if (address.coordinates) {
+            const distance = await getDistanceFromCurrentLocation(
+              address.coordinates.latitude,
+              address.coordinates.longitude
+            );
+            return { ...address, distance };
+          }
+          return address;
+        })
+      );
+      
+      setAddresses(updatedAddresses);
+      Alert.alert('Success', `Location detected! Your coordinates: ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`);
     } catch (error) {
-      Alert.alert('Error', 'Could not detect current location. Please check your GPS settings.');
+      console.error('Location error:', error);
+      if (error instanceof Error && error.message.includes('permission')) {
+        Alert.alert(
+          'Location Permission Required',
+          'Please enable location permissions in your device settings to use this feature.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Open Settings', onPress: () => {
+              // This would typically open device settings
+              Alert.alert('Settings', 'Please go to your device settings and enable location permissions for this app.');
+            }}
+          ]
+        );
+      } else {
+        Alert.alert('Location Error', 'Could not detect your current location. Please check your GPS settings and try again.');
+      }
+    } finally {
+      setIsLocationLoading(false);
     }
   };
 
-  const renderAddressCard = (address: Address) => (
-    <AddressCard
+  const filteredAddresses = (addresses || []).filter(address => {
+    const matchesSearch = searchQuery === '' || 
+      address.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      address.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      address.street.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesFilter = filterType === 'all' || address.type === filterType;
+    
+    return matchesSearch && matchesFilter;
+  });
+
+  const renderSearchAndFilters = () => (
+    <Animated.View style={[styles.searchContainer, { opacity: searchAnim }]}>
+      {/* Search Bar */}
+      <Surface style={styles.searchBar}>
+        <IconButton
+          icon="magnify"
+          size={20}
+          iconColor="#666"
+          style={styles.searchIconButton}
+        />
+        <TextInput
+          placeholder="Search addresses..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.searchInput}
+          mode="flat"
+        />
+        {searchQuery.length > 0 && (
+          <IconButton
+            icon="close"
+            size={20}
+            onPress={() => setSearchQuery('')}
+            iconColor="#666"
+          />
+        )}
+      </Surface>
+
+      {/* Quick Filters */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.filtersScroll}
+        contentContainerStyle={styles.filtersContent}
+      >
+        <Chip
+          mode={filterType === 'all' ? 'flat' : 'outlined'}
+          selected={filterType === 'all'}
+          onPress={() => setFilterType('all')}
+          style={[styles.filterChip, filterType === 'all' && styles.activeFilterChip]}
+          textStyle={filterType === 'all' ? { color: 'white' } : {}}
+        >
+          {`All (${addresses?.length || 0})`}
+        </Chip>
+        {addressTypes.map((type) => (
+          <Chip
+            key={type.id}
+            mode={filterType === type.id ? 'flat' : 'outlined'}
+            selected={filterType === type.id}
+            onPress={() => setFilterType(type.id)}
+            style={[styles.filterChip, filterType === type.id && styles.activeFilterChip]}
+            textStyle={filterType === type.id ? { color: 'white' } : {}}
+            icon={getAddressTypeIcon(type.id)}
+          >
+            {`${type.name} (${(addresses || []).filter(addr => addr.type === type.id).length})`}
+          </Chip>
+        ))}
+      </ScrollView>
+    </Animated.View>
+  );
+
+  const renderAddressCard = (address: Address, index: number) => (
+    <Animated.View
       key={address.id}
-      address={address}
-      onEdit={handleEditAddress}
-      onDelete={handleDeleteAddress}
-      onSetDefault={handleSetDefault}
-      animationValue={listAnim}
-    />
+      style={[
+        styles.addressCard,
+        {
+          opacity: listAnim,
+          transform: [{
+            translateY: listAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [50 + (index * 20), 0],
+            }),
+          }],
+        },
+      ]}
+    >
+      <Surface style={styles.addressSurface}>
+        {/* Address Header with Type Badge */}
+        <View style={styles.addressHeader}>
+          <View style={styles.addressTypeSection}>
+            <View style={[styles.typeIconContainer, { backgroundColor: getAddressTypeColor(address.type) }]}>
+              <IconButton
+                icon={getAddressTypeIcon(address.type)}
+                size={20}
+                iconColor="white"
+                style={styles.typeIconButton}
+              />
+            </View>
+            <View style={styles.addressTypeInfo}>
+              <Text style={styles.addressTypeName}>{getAddressTypeName(address.type)}</Text>
+              {address.isDefault && (
+                <View style={styles.defaultBadge}>
+                  <IconButton
+                    icon="star"
+                    size={12}
+                    iconColor="#FFD700"
+                    style={styles.defaultIconButton}
+                  />
+                  <Text style={styles.defaultText}>Default</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          
+          <View style={styles.addressActions}>
+            <IconButton
+              icon="pencil"
+              size={20}
+              iconColor="#666"
+              onPress={() => handleEditAddress(address)}
+              style={styles.actionIcon}
+            />
+            <IconButton
+              icon="delete"
+              size={20}
+              iconColor="#F44336"
+              onPress={() => handleDeleteAddress(address)}
+              style={styles.actionIcon}
+            />
+          </View>
+        </View>
+        
+        {/* Address Content */}
+        <View style={styles.addressContent}>
+          <Text style={styles.addressName}>{address.name}</Text>
+          <Text style={styles.addressText}>{formatFullAddress(address)}</Text>
+          
+          {/* Status Indicators */}
+          <View style={styles.statusContainer}>
+            {address.deliveryArea ? (
+              <View style={styles.statusItem}>
+                <IconButton
+                  icon="check-circle"
+                  size={16}
+                  iconColor="#4CAF50"
+                  style={styles.statusIconButton}
+                />
+                <Text style={styles.statusText}>In delivery area</Text>
+              </View>
+            ) : (
+              <View style={styles.statusItem}>
+                <IconButton
+                  icon="alert"
+                  size={16}
+                  iconColor="#FF9800"
+                  style={styles.statusIconButton}
+                />
+                <Text style={styles.statusText}>Outside delivery area</Text>
+              </View>
+            )}
+            
+            {address.distance && (
+              <View style={styles.statusItem}>
+                <IconButton
+                  icon="map-marker"
+                  size={16}
+                  iconColor="#2196F3"
+                  style={styles.statusIconButton}
+                />
+                <Text style={styles.statusText}>{address.distance} km away</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        
+        {/* Action Buttons */}
+        <View style={styles.cardActions}>
+          {!address.isDefault && (
+            <Button
+              mode="outlined"
+              onPress={() => handleSetDefault(address)}
+              icon="star"
+              style={styles.actionButton}
+              compact
+              textColor="#FF6B35"
+            >
+              Set as Default
+            </Button>
+          )}
+          
+          <Button
+            mode="outlined"
+            onPress={() => {
+              Alert.alert('Map View', 'Map integration coming soon!');
+            }}
+            icon="map"
+            style={styles.actionButton}
+            compact
+            textColor="#2196F3"
+          >
+            View on Map
+          </Button>
+        </View>
+      </Surface>
+    </Animated.View>
   );
 
   const renderAddEditDialog = () => (
@@ -269,17 +550,56 @@ export default function AddressesScreen() {
         }}
         style={styles.dialog}
       >
-        <Dialog.Title>
+        <Dialog.Title style={styles.dialogTitle}>
           {editingAddress ? 'Edit Address' : 'Add New Address'}
         </Dialog.Title>
         
         <Dialog.Content>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Address Type Selection */}
-            <AddressTypeSelector
-              selectedType={formData.type}
-              onTypeChange={(type) => setFormData(prev => ({ ...prev, type }))}
-            />
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Address Type</Text>
+              <Menu
+                visible={showTypeMenu}
+                onDismiss={() => setShowTypeMenu(false)}
+                anchor={
+                  <Pressable
+                    style={styles.typeSelector}
+                    onPress={() => setShowTypeMenu(true)}
+                  >
+                    <View style={[styles.typeIcon, { backgroundColor: getAddressTypeColor(formData.type) }]}>
+                      <IconButton
+                        icon={getAddressTypeIcon(formData.type)}
+                        size={20}
+                        iconColor="white"
+                        style={styles.formTypeIconButton}
+                      />
+                    </View>
+                    <Text style={styles.typeSelectorText}>
+                      {getAddressTypeName(formData.type)}
+                    </Text>
+                    <IconButton
+                      icon="chevron-down"
+                      size={24}
+                      iconColor="#666"
+                      style={styles.dropdownIcon}
+                    />
+                  </Pressable>
+                }
+              >
+                {addressTypes.map((type) => (
+                  <Menu.Item
+                    key={type.id}
+                    onPress={() => {
+                      setFormData(prev => ({ ...prev, type: type.id as 'home' | 'office' | 'other' }));
+                      setShowTypeMenu(false);
+                    }}
+                    title={type.name}
+                    leadingIcon="location-on"
+                  />
+                ))}
+              </Menu>
+            </View>
             
             {/* Address Name */}
             <View style={styles.formSection}>
@@ -290,6 +610,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="e.g., Home, Office, Friend's House"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -302,6 +624,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, houseNumber: text }))}
                 placeholder="e.g., House No. 45, Flat 2A"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -314,6 +638,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, street: text }))}
                 placeholder="e.g., Rajpur Village, Near Temple"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -326,6 +652,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, landmark: text }))}
                 placeholder="e.g., Near Temple, Opposite Bank"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -338,6 +666,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, city: text }))}
                 placeholder="e.g., Haridwar"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -350,6 +680,8 @@ export default function AddressesScreen() {
                 onChangeText={(text) => setFormData(prev => ({ ...prev, state: text }))}
                 placeholder="e.g., Uttarakhand"
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
@@ -364,19 +696,23 @@ export default function AddressesScreen() {
                 keyboardType="numeric"
                 maxLength={6}
                 style={styles.textInput}
+                outlineColor="#E0E0E0"
+                activeOutlineColor="#FF6B35"
               />
             </View>
             
             {/* Current Location Button */}
             <View style={styles.formSection}>
-                      <Button
-          mode="outlined"
-          onPress={handleUseCurrentLocation}
-          icon={() => <MaterialIcons name="my-location" size={20} color="#FF6B35" />}
-          style={styles.locationButton}
-        >
-          Use Current Location
-        </Button>
+              <Button
+                mode="outlined"
+                onPress={handleUseCurrentLocation}
+                icon="crosshairs-gps"
+                style={styles.locationButton}
+                textColor="#2196F3"
+                buttonColor="#E3F2FD"
+              >
+                Use Current Location
+              </Button>
             </View>
             
             {/* Set as Default */}
@@ -393,16 +729,24 @@ export default function AddressesScreen() {
           </ScrollView>
         </Dialog.Content>
         
-        <Dialog.Actions>
-          <Button onPress={() => {
-            setShowAddDialog(false);
-            setShowEditDialog(false);
-            setEditingAddress(null);
-            resetForm();
-          }}>
+        <Dialog.Actions style={styles.dialogActions}>
+          <Button 
+            onPress={() => {
+              setShowAddDialog(false);
+              setShowEditDialog(false);
+              setEditingAddress(null);
+              resetForm();
+            }}
+            textColor="#666"
+          >
             Cancel
           </Button>
-          <Button onPress={handleSaveAddress} mode="contained">
+          <Button 
+            onPress={handleSaveAddress} 
+            mode="contained"
+            buttonColor="#FF6B35"
+            style={styles.saveButton}
+          >
             {editingAddress ? 'Update' : 'Save'}
           </Button>
         </Dialog.Actions>
@@ -418,21 +762,37 @@ export default function AddressesScreen() {
           setShowDeleteDialog(false);
           setDeletingAddress(null);
         }}
+        style={styles.deleteDialog}
       >
-        <Dialog.Title>Delete Address</Dialog.Title>
+        <Dialog.Title style={styles.deleteDialogTitle}>Delete Address</Dialog.Title>
         <Dialog.Content>
-          <Text>
-            Are you sure you want to delete "{deletingAddress?.name}"? This action cannot be undone.
-          </Text>
+          <View style={styles.deleteContent}>
+            <IconButton
+              icon="delete"
+              size={48}
+              iconColor="#F44336"
+              style={styles.deleteDialogIcon}
+            />
+            <Text style={styles.deleteText}>
+              Are you sure you want to delete "{deletingAddress?.name}"? This action cannot be undone.
+            </Text>
+          </View>
         </Dialog.Content>
-        <Dialog.Actions>
-          <Button onPress={() => {
-            setShowDeleteDialog(false);
-            setDeletingAddress(null);
-          }}>
+        <Dialog.Actions style={styles.dialogActions}>
+          <Button 
+            onPress={() => {
+              setShowDeleteDialog(false);
+              setDeletingAddress(null);
+            }}
+            textColor="#666"
+          >
             Cancel
           </Button>
-          <Button onPress={confirmDeleteAddress} textColor="#F44336">
+          <Button 
+            onPress={confirmDeleteAddress} 
+            textColor="#F44336"
+            mode="outlined"
+          >
             Delete
           </Button>
         </Dialog.Actions>
@@ -442,16 +802,25 @@ export default function AddressesScreen() {
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
-      <MaterialIcons name="location-off" size={64} color="#ccc" />
+      <IconButton
+        icon="map-marker-off"
+        size={80}
+        iconColor="#E0E0E0"
+        style={styles.emptyStateIcon}
+      />
       <Text style={styles.emptyTitle}>No Addresses Found</Text>
       <Text style={styles.emptySubtitle}>
-        Add your first delivery address to get started
+        {searchQuery || filterType !== 'all' 
+          ? 'No addresses match your search criteria'
+          : 'Add your first delivery address to get started'
+        }
       </Text>
       <Button
         mode="contained"
         onPress={handleAddAddress}
-        icon={() => <MaterialIcons name="add" size={20} color="white" />}
+        icon="plus"
         style={styles.addFirstButton}
+        buttonColor="#FF6B35"
       >
         Add Your First Address
       </Button>
@@ -460,27 +829,69 @@ export default function AddressesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      
       {/* Header */}
-      <View style={styles.header}>
-        <IconButton
-          icon={() => <MaterialIcons name="arrow-back" size={24} color="#333" />}
-          onPress={() => router.back()}
-        />
-        <Text style={styles.headerTitle}>Saved Addresses</Text>
-        <IconButton
-          icon={() => <MaterialIcons name="help-outline" size={24} color="#666" />}
-          onPress={() => Alert.alert('Help', 'Address management help coming soon!')}
-        />
-      </View>
+      <Animated.View 
+        style={[
+          styles.header,
+          {
+            transform: [{
+              translateY: headerAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-100, 0],
+              }),
+          }],
+        }]}
+      >
+        <View style={styles.headerContent}>
+          <IconButton
+            icon="arrow-left"
+            size={24}
+            iconColor="#333"
+            onPress={() => router.back()}
+            style={styles.backButton}
+          />
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>Saved Addresses</Text>
+            <Text style={styles.headerSubtitle}>
+              {filteredAddresses.length} of {addresses?.length || 0} addresses
+            </Text>
+          </View>
+          <View style={styles.headerActions}>
+            <IconButton
+              icon={isLocationLoading ? "loading" : "crosshairs-gps"}
+              size={20}
+              iconColor="#FF6B35"
+              onPress={handleUseCurrentLocation}
+              style={styles.locationButton}
+              disabled={isLocationLoading}
+            />
+            <IconButton
+              icon="help-circle-outline"
+              size={24}
+              iconColor="#666"
+              onPress={() => Alert.alert('Help', 'Address management help coming soon!')}
+              style={styles.helpButton}
+            />
+          </View>
+        </View>
+      </Animated.View>
+      
+      {/* Search and Filters */}
+      {renderSearchAndFilters()}
       
       {/* Content */}
       <View style={styles.content}>
-        {addresses.length === 0 ? (
+        {!filteredAddresses || filteredAddresses.length === 0 ? (
           renderEmptyState()
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
-            {addresses.map(renderAddressCard)}
-            <View style={{ height: 100 }} /> {/* Bottom spacing for FAB */}
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {filteredAddresses.map((address, index) => renderAddressCard(address, index))}
+            <View style={{ height: 120 }} /> {/* Bottom spacing for FAB */}
           </ScrollView>
         )}
       </View>
@@ -497,11 +908,12 @@ export default function AddressesScreen() {
         ]}
       >
         <FAB
-          icon={() => <MaterialIcons name="add" size={24} color="white" />}
+          icon="plus"
           label="Add Address"
           onPress={handleAddAddress}
           style={styles.fab}
           color="white"
+          customSize={56}
         />
       </Animated.View>
       
@@ -515,87 +927,367 @@ export default function AddressesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e9ecef',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  backButton: {
+    marginRight: 8,
+  },
+  headerTitleContainer: {
+    flex: 1,
+    marginLeft: 8,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginTop: 2,
+  },
+  helpButton: {
+    marginLeft: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationButton: {
+    marginRight: 4,
+  },
+  searchContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 12,
+    fontSize: 16,
+    color: '#1a1a1a',
+    backgroundColor: 'transparent',
+  },
+  filtersScroll: {
+    marginHorizontal: -16,
+  },
+  filtersContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  filterChip: {
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f8f9fa',
+    borderColor: '#dee2e6',
+  },
+  activeFilterChip: {
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
   },
   content: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 32,
   },
   emptyTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
-    color: '#666',
-    marginTop: 16,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
+    color: '#495057',
+    marginTop: 24,
     textAlign: 'center',
   },
+  emptySubtitle: {
+    fontSize: 16,
+    color: '#6c757d',
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
   addFirstButton: {
-    marginTop: 20,
-    backgroundColor: '#FF6B35',
+    marginTop: 32,
+    borderRadius: 12,
+    paddingHorizontal: 24,
   },
   fabContainer: {
     position: 'absolute',
-    right: 16,
-    bottom: 16,
+    right: 20,
+    bottom: 20,
     zIndex: 10,
   },
   fab: {
     backgroundColor: '#FF6B35',
+    borderRadius: 28,
+    elevation: 8,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-
+  addressCard: {
+    marginBottom: 20,
+  },
+  addressSurface: {
+    borderRadius: 16,
+    elevation: 3,
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+  },
+  addressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+  },
+  addressTypeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  typeIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  typeIconButton: {
+    margin: 0,
+    padding: 0,
+  },
+  defaultIconButton: {
+    margin: 0,
+    padding: 0,
+  },
+  statusIconButton: {
+    margin: 0,
+    padding: 0,
+  },
+  emptyStateIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  searchIconButton: {
+    margin: 0,
+    padding: 0,
+  },
+  formTypeIconButton: {
+    margin: 0,
+    padding: 0,
+  },
+  deleteDialogIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  dropdownIcon: {
+    margin: 0,
+    padding: 0,
+  },
+  addressTypeInfo: {
+    flex: 1,
+  },
+  addressTypeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  defaultBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  defaultText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#856404',
+    marginLeft: 4,
+  },
+  addressActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionIcon: {
+    marginLeft: 4,
+  },
+  addressContent: {
+    padding: 16,
+  },
+  addressName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 8,
+  },
+  addressText: {
+    fontSize: 16,
+    color: '#495057',
+    marginBottom: 16,
+    lineHeight: 22,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#495057',
+    marginLeft: 6,
+    fontWeight: '500',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e9ecef',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1.5,
+  },
   dialog: {
-    borderRadius: 10,
+    borderRadius: 16,
+    maxHeight: height * 0.8,
+  },
+  dialogTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    textAlign: 'center',
+  },
+  deleteDialog: {
+    borderRadius: 16,
+  },
+  deleteDialogTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#F44336',
+    textAlign: 'center',
+  },
+  deleteContent: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  deleteText: {
+    fontSize: 16,
+    color: '#495057',
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 22,
+  },
+  dialogActions: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  saveButton: {
+    borderRadius: 8,
   },
   formSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   formLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#1a1a1a',
     marginBottom: 8,
   },
-
-  textInput: {
-    backgroundColor: '#f8f8f8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-    color: '#333',
-  },
-  locationButton: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  typeSelector: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
+  typeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  typeSelectorText: {
+    fontSize: 16,
+    color: '#1a1a1a',
+    flex: 1,
+    fontWeight: '500',
+  },
+  textInput: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    fontSize: 16,
+    color: '#1a1a1a',
+  },
+
   switchContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
