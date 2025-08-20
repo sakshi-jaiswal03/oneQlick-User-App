@@ -60,6 +60,7 @@ export default function AddressesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isLocationLoading, setIsLocationLoading] = useState(false);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState<{

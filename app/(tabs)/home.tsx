@@ -146,11 +146,7 @@ export default function HomeScreen() {
           hasLocation={!!currentCoordinates}
         />
 
-        {/* Welcome Section */}
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome back! 👋</Text>
-          <Text style={styles.welcomeSubtitle}>What would you like to order today?</Text>
-        </View>
+
 
         {/* Carousel */}
         <Carousel 
@@ -223,33 +219,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 0,
   },
-  welcomeSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 24,
-    backgroundColor: 'white',
-    marginBottom: 24,
-    marginHorizontal: 20,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  welcomeTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
-  },
   quickActionsSection: {
     paddingHorizontal: 20,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   quickActionsRow: {
     flexDirection: 'row',
@@ -290,6 +262,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   bottomSpacing: {
-    height: 40,
+    height: 60,
   },
 }); 
