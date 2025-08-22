@@ -146,8 +146,6 @@ export default function HomeScreen() {
           hasLocation={!!currentCoordinates}
         />
 
-
-
         {/* Carousel */}
         <Carousel 
           items={carouselItems}
@@ -158,32 +156,6 @@ export default function HomeScreen() {
             // Handle carousel item press
           }}
         />
-
-        {/* Quick Actions */}
-        <View style={styles.quickActionsSection}>
-          <View style={styles.quickActionsRow}>
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/search')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="search" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>Search Food</Text>
-            </Pressable>
-            
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/(modals)/cart')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="shopping-cart" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>View Cart</Text>
-            </Pressable>
-            
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/orders')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="receipt" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>My Orders</Text>
-            </Pressable>
-          </View>
-        </View>
 
         {/* Food Categories */}
         <FoodCategories categories={foodCategories} />
@@ -218,48 +190,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
     paddingTop: 0,
-  },
-  quickActionsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 24,
-  },
-  quickActionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  quickActionButton: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    minHeight: 120,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FFF3E0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 2,
-    borderColor: '#FFE0B2',
-  },
-  quickActionText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    lineHeight: 20,
   },
   bottomSpacing: {
     height: 60,

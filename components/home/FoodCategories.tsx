@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { Text, Surface } from 'react-native-paper';
+import { Text } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -29,13 +29,13 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
       style={styles.categoryItem}
       onPress={() => handleCategoryPress(category.name)}
     >
-      <Surface style={styles.categoryCard}>
+      <View style={styles.categoryCard}>
         <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
           <MaterialIcons name={category.icon as any} size={24} color="white" />
         </View>
         <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
         <Text style={styles.categoryCount}>{category.itemCount} items</Text>
-      </Surface>
+      </View>
     </Pressable>
   );
 
@@ -67,17 +67,10 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
 
 const styles = StyleSheet.create({
   section: {
-    padding: 24,
+    paddingHorizontal: 20,
     paddingTop: 24,
-    backgroundColor: 'white',
+    paddingBottom: 24,
     marginBottom: 24,
-    marginHorizontal: 20,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
   },
   sectionHeader: {
     flexDirection: 'row',

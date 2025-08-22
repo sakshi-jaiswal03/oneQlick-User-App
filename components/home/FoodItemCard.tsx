@@ -59,25 +59,23 @@ export default function FoodItemCard({
               <Text style={styles.popularBadgeText}>🔥 Popular</Text>
             </View>
           )}
+          {/* Veg/Non-veg indicator overlay on image */}
+          <View style={styles.vegIndicatorOverlay}>
+            <View style={[styles.vegIndicator, { backgroundColor: dish.isVeg ? '#4CAF50' : '#F44336' }]}>
+              <View style={styles.vegInnerCircle}>
+                <View style={[styles.vegDot, { backgroundColor: dish.isVeg ? '#4CAF50' : '#F44336' }]} />
+              </View>
+            </View>
+          </View>
         </View>
         
         {/* Food Details */}
         <View style={styles.dishContent}>
-          {/* Header with Name and Veg Indicator */}
+          {/* Header with Name and Category */}
           <View style={styles.dishHeader}>
-            <View style={styles.nameAndVegContainer}>
-              <Text style={styles.dishName} numberOfLines={1}>
-                {dish.name}
-              </Text>
-              {/* Veg/Non-veg indicator next to name */}
-              <View style={[styles.vegIndicator, { backgroundColor: dish.isVeg ? '#4CAF50' : '#F44336' }]}>
-                <MaterialIcons 
-                  name={dish.isVeg ? "circle" : "cancel"} 
-                  size={10} 
-                  color="white" 
-                />
-              </View>
-            </View>
+            <Text style={styles.dishName} numberOfLines={1}>
+              {dish.name}
+            </Text>
             <Text style={styles.dishCategory}>{dish.category}</Text>
           </View>
           
@@ -140,13 +138,13 @@ export default function FoodItemCard({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   dishCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 12,
+    padding: 16,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -154,59 +152,74 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     borderWidth: 1,
     borderColor: '#f0f0f0',
-    minHeight: 120, // Reduced height
+    minHeight: 140,
   },
   imageContainer: {
     position: 'relative',
-    marginRight: 12,
+    marginRight: 16,
   },
   dishImage: {
-    width: 70,
-    height: 70,
+    width: 80,
+    height: 80,
     borderRadius: 12,
     backgroundColor: '#FFF8E1',
   },
   popularBadge: {
     position: 'absolute',
-    bottom: -4,
+    top: -4,
     left: -4,
     backgroundColor: '#FF6B35',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
     elevation: 2,
   },
   popularBadgeText: {
     color: 'white',
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '700',
+  },
+  vegIndicatorOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+  },
+  vegIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 2,
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  vegInnerCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  vegDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   dishContent: {
     flex: 1,
     justifyContent: 'space-between',
   },
   dishHeader: {
-    marginBottom: 6,
-  },
-  nameAndVegContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   dishName: {
     fontSize: 16,
     fontWeight: '700',
     color: '#1a1a1a',
-    flex: 1,
-    marginRight: 8,
-  },
-  vegIndicator: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 2,
+    marginBottom: 4,
+    lineHeight: 20,
   },
   dishCategory: {
     fontSize: 11,
@@ -219,13 +232,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     lineHeight: 18,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   dishMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   ratingContainer: {
     flexDirection: 'row',

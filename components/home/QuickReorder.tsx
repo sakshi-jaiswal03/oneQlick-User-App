@@ -52,15 +52,17 @@ export default function QuickReorder({ reorders }: QuickReorderProps) {
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Quick Reorder</Text>
+        <Text style={styles.sectionTitle}>🔄 Quick Reorder</Text>
         <Pressable onPress={() => router.push('/(tabs)/orders')}>
           <Text style={styles.viewAllText}>View Orders</Text>
         </Pressable>
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.reorderContainer}>
-          {reorders.map(renderReorder)}
-        </View>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {reorders.map(renderReorder)}
       </ScrollView>
     </View>
   );
@@ -68,58 +70,70 @@ export default function QuickReorder({ reorders }: QuickReorderProps) {
 
 const styles = StyleSheet.create({
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 0,
+    paddingBottom: 24,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1a1a1a',
   },
   viewAllText: {
     fontSize: 14,
     color: '#FF6B35',
     fontWeight: '600',
   },
-  reorderContainer: {
-    flexDirection: 'row',
+  scrollContent: {
     paddingRight: 20,
   },
   reorderCard: {
     width: 280,
-    padding: 16,
+    padding: 20,
     marginRight: 16,
-    borderRadius: 12,
-    elevation: 2,
+    borderRadius: 16,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
+    backgroundColor: 'white',
   },
   reorderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   reorderRestaurant: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: '700',
+    color: '#1a1a1a',
+    flex: 1,
+    marginRight: 8,
   },
   reorderDate: {
     fontSize: 12,
     color: '#666',
+    fontWeight: '500',
   },
   reorderItems: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   reorderItem: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 4,
+    marginBottom: 6,
+    lineHeight: 18,
   },
   reorderFooter: {
     flexDirection: 'row',
@@ -128,14 +142,16 @@ const styles = StyleSheet.create({
   },
   reorderTotal: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
     color: '#FF6B35',
   },
   reorderButton: {
     backgroundColor: '#FF6B35',
+    borderRadius: 12,
+    elevation: 2,
   },
   reorderButtonContent: {
     paddingHorizontal: 16,
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
 }); 

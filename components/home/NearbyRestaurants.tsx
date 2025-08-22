@@ -65,9 +65,10 @@ export default function NearbyRestaurants({ restaurants }: NearbyRestaurantsProp
 
 const styles = StyleSheet.create({
   section: {
-    padding: 20,
+    paddingHorizontal: 20,
     paddingTop: 0,
-    marginBottom: 24, // Add proper margin to prevent cutting
+    paddingBottom: 24,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
