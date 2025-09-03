@@ -24,19 +24,89 @@ export interface AddressFormData {
   pincode?: string;
 }
 
+// Backend response interface
+interface BackendLocationResponse {
+  success: boolean;
+  address: {
+    full: string;
+    short: string;
+    components: {
+      street: string;
+      locality: string;
+      city: string;
+      state: string;
+      country: string;
+      countryCode: string;
+      pincode: string;
+    };
+  };
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+  metadata: {
+    source: string;
+    cached: boolean;
+    processingTime: string;
+    timestamp: string;
+  };
+}
+
+/**
+ * Get location from backend service
+ */
+const getLocationFromBackend = async (latitude: number, longitude: number): Promise<BackendLocationResponse> => {
+  try {
+    const response = await fetch('https://location-service-xocf.vercel.app/api/v1/location/reverse', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        latitude,
+        longitude,
+        language: 'en'
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend service error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error('Backend service returned unsuccessful response');
+    }
+
+    // Log the metadata for debugging (as requested)
+    console.log('Location Service Metadata:', {
+      source: data.metadata.source,
+      cached: data.metadata.cached,
+      processingTime: data.metadata.processingTime,
+      timestamp: data.metadata.timestamp
+    });
+
+    return data;
+  } catch (error) {
+    console.error('Backend location service error:', error);
+    throw error;
+  }
+};
+
 /**
  * Get current location with high accuracy and detailed address information
  */
 export const getCurrentLocation = async (): Promise<LocationData> => {
   try {
-    // Request location permissions
+    // Request location permissions (still need expo-location for GPS)
     const { status } = await Location.requestForegroundPermissionsAsync();
     
     if (status !== 'granted') {
       throw new Error('Location permission denied');
     }
 
-    // Get current position with high accuracy for better address resolution
+    // Get current position with high accuracy
     const location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
       timeInterval: 3000,
@@ -48,93 +118,21 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
       longitude: location.coords.longitude,
     };
 
-    // Get address from coordinates with detailed information
-    const addressResponse = await Location.reverseGeocodeAsync(coords);
-    let displayName = '';
-    let addressData: LocationData['address'] = {
-      street: null,
-      name: null,
-      city: null,
-      region: null,
-      country: null,
-      postalCode: null,
+    // Get address from our backend service
+    const backendResponse = await getLocationFromBackend(coords.latitude, coords.longitude);
+    
+    // Transform backend response to our LocationData format
+    const addressData: LocationData['address'] = {
+      street: backendResponse.address.components.street || null,
+      name: backendResponse.address.components.locality || null,
+      city: backendResponse.address.components.city || null,
+      region: backendResponse.address.components.state || null,
+      country: backendResponse.address.components.country || null,
+      postalCode: backendResponse.address.components.pincode || null,
     };
 
-    if (addressResponse.length > 0) {
-      const address = addressResponse[0];
-      
-      // Extract address components
-      addressData = {
-        street: address.street,
-        name: address.name,
-        city: address.city,
-        region: address.region,
-        country: address.country,
-        postalCode: address.postalCode,
-      };
-
-      // Create display name with priority system
-      // Priority 1: Street name + neighborhood/area
-      if (address.street && address.name) {
-        displayName = `${address.street}, ${address.name}`;
-      }
-      // Priority 2: Street name + city
-      else if (address.street && address.city) {
-        displayName = `${address.street}, ${address.city}`;
-      }
-      // Priority 3: Area name + city
-      else if (address.name && address.city) {
-        displayName = `${address.name}, ${address.city}`;
-      }
-      // Priority 4: Street name + region
-      else if (address.street && address.region) {
-        displayName = `${address.street}, ${address.region}`;
-      }
-      // Priority 5: Just street name
-      else if (address.street) {
-        displayName = address.street;
-      }
-      // Priority 6: Just area name
-      else if (address.name) {
-        displayName = address.name;
-      }
-      // Priority 7: City + region
-      else if (address.city && address.region) {
-        displayName = `${address.city}, ${address.region}`;
-      }
-      // Priority 8: Just city
-      else if (address.city) {
-        displayName = address.city;
-      }
-
-      // If we still don't have a good display name, try to get more specific info
-      if (!displayName || displayName.length < 10) {
-        // Try to get additional location details with different approach
-        try {
-          // Sometimes the first result might not be the most specific
-          // Let's try to get more results and pick the most specific one
-          if (addressResponse.length > 1) {
-            for (let i = 1; i < addressResponse.length; i++) {
-              const altAddress = addressResponse[i];
-              if (altAddress.street && altAddress.name && altAddress.name !== altAddress.street) {
-                displayName = `${altAddress.street}, ${altAddress.name}`;
-                break;
-              } else if (altAddress.street && !displayName.includes(altAddress.street)) {
-                displayName = altAddress.street;
-                break;
-              }
-            }
-          }
-        } catch (additionalError) {
-          console.log('Additional address lookup failed:', additionalError);
-        }
-      }
-    }
-
-    // Fallback to coordinates if no address found
-    if (!displayName) {
-      displayName = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
-    }
+    // Use the full address from backend as display name (as requested)
+    const displayName = backendResponse.address.full || backendResponse.address.short || 'Location not found';
 
     return {
       coordinates: coords,
@@ -143,7 +141,65 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
     };
   } catch (error) {
     console.error('Error getting location:', error);
-    throw error;
+    
+    // Fallback to expo-location if backend fails
+    try {
+      console.log('Falling back to expo-location...');
+      
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const coords = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+
+      const addressResponse = await Location.reverseGeocodeAsync(coords);
+      let displayName = '';
+      let addressData: LocationData['address'] = {
+        street: null,
+        name: null,
+        city: null,
+        region: null,
+        country: null,
+        postalCode: null,
+      };
+
+      if (addressResponse.length > 0) {
+        const address = addressResponse[0];
+        
+        addressData = {
+          street: address.street,
+          name: address.name,
+          city: address.city,
+          region: address.region,
+          country: address.country,
+          postalCode: address.postalCode,
+        };
+
+        if (address.street && address.city) {
+          displayName = `${address.street}, ${address.city}`;
+        } else if (address.name && address.city) {
+          displayName = `${address.name}, ${address.city}`;
+        } else if (address.city) {
+          displayName = address.city;
+        }
+      }
+
+      if (!displayName) {
+        displayName = `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+      }
+
+      return {
+        coordinates: coords,
+        address: addressData,
+        displayName,
+      };
+    } catch (fallbackError) {
+      console.error('Fallback location service also failed:', fallbackError);
+      throw error; // Throw original error
+    }
   }
 };
 

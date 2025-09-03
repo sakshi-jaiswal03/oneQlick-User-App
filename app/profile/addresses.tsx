@@ -422,7 +422,7 @@ export default function AddressesScreen() {
           <View style={styles.addressTypeSection}>
             <View style={[styles.typeIconContainer, { backgroundColor: getAddressTypeColor(address.type) }]}>
               <IconButton
-                icon={getAddressTypeIcon(address.type)}
+              icon={getAddressTypeIcon(address.type)}
                 size={20}
                 iconColor="white"
                 style={styles.typeIconButton}
@@ -430,7 +430,7 @@ export default function AddressesScreen() {
             </View>
             <View style={styles.addressTypeInfo}>
               <Text style={styles.addressTypeName}>{getAddressTypeName(address.type)}</Text>
-              {address.isDefault && (
+            {address.isDefault && (
                 <View style={styles.defaultBadge}>
                   <IconButton
                     icon="star"
@@ -440,7 +440,7 @@ export default function AddressesScreen() {
                   />
                   <Text style={styles.defaultText}>Default</Text>
                 </View>
-              )}
+            )}
             </View>
           </View>
           
@@ -572,7 +572,7 @@ export default function AddressesScreen() {
                         size={20}
                         iconColor="white"
                         style={styles.formTypeIconButton}
-                      />
+                    />
                     </View>
                     <Text style={styles.typeSelectorText}>
                       {getAddressTypeName(formData.type)}
@@ -731,10 +731,10 @@ export default function AddressesScreen() {
         <Dialog.Actions style={styles.dialogActions}>
           <Button 
             onPress={() => {
-              setShowAddDialog(false);
-              setShowEditDialog(false);
-              setEditingAddress(null);
-              resetForm();
+            setShowAddDialog(false);
+            setShowEditDialog(false);
+            setEditingAddress(null);
+            resetForm();
             }}
             textColor="#666"
           >
@@ -773,15 +773,15 @@ export default function AddressesScreen() {
               style={styles.deleteDialogIcon}
             />
             <Text style={styles.deleteText}>
-              Are you sure you want to delete "{deletingAddress?.name}"? This action cannot be undone.
-            </Text>
+            Are you sure you want to delete "{deletingAddress?.name}"? This action cannot be undone.
+          </Text>
           </View>
         </Dialog.Content>
         <Dialog.Actions style={styles.dialogActions}>
           <Button 
             onPress={() => {
-              setShowDeleteDialog(false);
-              setDeletingAddress(null);
+            setShowDeleteDialog(false);
+            setDeletingAddress(null);
             }}
             textColor="#666"
           >
@@ -844,21 +844,21 @@ export default function AddressesScreen() {
         }]}
       >
         <View style={styles.headerContent}>
-          <IconButton
+        <IconButton
             icon="arrow-left"
-            size={24}
-            iconColor="#333"
-            onPress={() => router.back()}
+          size={24}
+          iconColor="#333"
+          onPress={() => router.back()}
             style={styles.backButton}
-          />
+        />
           <View style={styles.headerTitleContainer}>
-            <Text style={styles.headerTitle}>Saved Addresses</Text>
+        <Text style={styles.headerTitle}>Saved Addresses</Text>
             <Text style={styles.headerSubtitle}>
               {filteredAddresses.length} of {addresses?.length || 0} addresses
             </Text>
           </View>
           <View style={styles.headerActions}>
-            <IconButton
+        <IconButton
               icon={isLocationLoading ? "loading" : "crosshairs-gps"}
               size={20}
               iconColor="#FF6B35"
@@ -868,12 +868,12 @@ export default function AddressesScreen() {
             />
             <IconButton
               icon="help-circle-outline"
-              size={24}
-              iconColor="#666"
-              onPress={() => Alert.alert('Help', 'Address management help coming soon!')}
+          size={24}
+          iconColor="#666"
+          onPress={() => Alert.alert('Help', 'Address management help coming soon!')}
               style={styles.helpButton}
-            />
-          </View>
+        />
+      </View>
         </View>
       </Animated.View>
       

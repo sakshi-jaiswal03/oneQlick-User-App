@@ -62,7 +62,7 @@ export default function HomeScreen() {
       // Refresh location along with other data
       await getCurrentLocationData();
       // Simulate other API calls
-      setTimeout(() => {
+    setTimeout(() => {
         setRefreshing(false);
       }, 1000);
     } catch (error) {

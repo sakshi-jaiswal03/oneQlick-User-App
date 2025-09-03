@@ -1,27 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  Pressable,
+import { 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  Pressable, 
   Animated,
   Dimensions,
   TextInput,
 } from 'react-native';
-import {
-  Text,
-  Surface,
+import { 
+  Text, 
+  Surface, 
   Button,
   IconButton,
   Chip,
-  Menu,
   ActivityIndicator,
   Divider,
 } from 'react-native-paper';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -55,21 +53,6 @@ interface SearchSuggestion {
   icon?: string;
 }
 
-interface SortOption {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-}
-
-interface SearchFilter {
-  id: string;
-  name: string;
-  count: number;
-  isSelected: boolean;
-  type: 'cuisine' | 'price' | 'rating' | 'delivery' | 'preset';
-}
-
 interface QuickFilter {
   id: string;
   name: string;
@@ -79,464 +62,222 @@ interface QuickFilter {
 
 export default function SearchScreen() {
   const router = useRouter();
-  const searchInputRef = useRef<any>(null);
+  const searchInputRef = useRef<TextInput>(null);
   
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [filteredResults, setFilteredResults] = useState<SearchResult[]>([]);
-  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [quickFilters, setQuickFilters] = useState<QuickFilter[]>([]);
-  const [selectedSort, setSelectedSort] = useState<SortOption | null>(null);
-  const [showSortMenu, setShowSortMenu] = useState(false);
-  const [recentSearches, setRecentSearches] = useState<string[]>(['biryani', 'pizza', 'chinese']);
-  const [trendingSearches] = useState<string[]>(['masala dosa', 'butter chicken', 'gulab jamun']);
+  const [quickFilters, setQuickFilters] = useState<QuickFilter[]>([
+    { id: 'veg', name: 'Veg Only', icon: 'leaf', active: false },
+    { id: 'fast', name: 'Fast Delivery', icon: 'clock-fast', active: false },
+    { id: 'popular', name: 'Popular', icon: 'fire', active: false },
+    { id: 'offers', name: 'Offers', icon: 'tag', active: false },
+  ]);
+  const [recentSearches] = useState<string[]>(['biryani', 'pizza', 'chinese', 'burger']);
+  const [trendingSearches] = useState<string[]>(['masala dosa', 'butter chicken', 'gulab jamun', 'pasta']);
   
   // Animation values
-  const searchBarAnim = useRef(new Animated.Value(0)).current;
-  const filtersAnim = useRef(new Animated.Value(0)).current;
-  const resultsAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Data
-  const sortOptions: SortOption[] = [
-    { id: 'relevance', name: 'Relevance', description: 'Most relevant results', icon: 'star' },
-    { id: 'rating', name: 'Rating', description: 'Highest rated first', icon: 'star' },
-    { id: 'delivery-time', name: 'Delivery Time', description: 'Fastest delivery first', icon: 'access-time' },
-    { id: 'price-low', name: 'Price: Low to High', description: 'Lowest price first', icon: 'trending-up' },
-    { id: 'price-high', name: 'Price: High to Low', description: 'Highest price first', icon: 'trending-down' },
-    { id: 'distance', name: 'Distance', description: 'Nearest first', icon: 'place' },
-  ];
-
-  const searchFilters: SearchFilter[] = [
-    // Cuisine filters
-    { id: 'cuisine_north_indian', name: 'North Indian', count: 45, isSelected: false, type: 'cuisine' },
-    { id: 'cuisine_south_indian', name: 'South Indian', count: 38, isSelected: false, type: 'cuisine' },
-    { id: 'cuisine_chinese', name: 'Chinese', count: 28, isSelected: false, type: 'cuisine' },
-    { id: 'cuisine_fast_food', name: 'Fast Food', count: 42, isSelected: false, type: 'cuisine' },
-    
-    // Price filters
-    { id: 'price_under_200', name: 'Under ₹200', count: 89, isSelected: false, type: 'price' },
-    { id: 'price_200_500', name: '₹200-500', count: 156, isSelected: false, type: 'price' },
-    { id: 'price_above_500', name: 'Above ₹500', count: 67, isSelected: false, type: 'price' },
-    
-    // Rating filters
-    { id: 'rating_4_plus', name: '4.0+', count: 234, isSelected: false, type: 'rating' },
-    { id: 'rating_4_5_plus', name: '4.5+', count: 156, isSelected: false, type: 'rating' },
-    
-    // Delivery filters
-    { id: 'delivery_under_30', name: 'Under 30 mins', count: 123, isSelected: false, type: 'delivery' },
-    { id: 'delivery_30_60', name: '30-60 mins', count: 189, isSelected: false, type: 'delivery' },
-  ];
-
-  const quickFilterPresets: QuickFilter[] = [
-    { id: 'veg-only', name: 'Veg Only', icon: 'eco', active: false },
-    { id: 'fast-delivery', name: 'Fast Delivery', icon: 'flash-on', active: false },
-    { id: 'popular', name: 'Popular', icon: 'trending-up', active: false },
-    { id: 'budget-friendly', name: 'Budget Friendly', icon: 'account-balance-wallet', active: false },
-  ];
-
+  // Sample data
   const sampleSearchResults: SearchResult[] = [
-    // Restaurant results
     {
-      id: 'rest-1',
+      id: '1',
       type: 'restaurant',
-      name: "Sharma's Kitchen",
-      description: 'Authentic North Indian cuisine with traditional recipes',
-      image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=300&h=200&fit=crop&crop=center',
+      name: 'Spice Garden',
+      description: 'Authentic Indian cuisine with traditional flavors',
       rating: 4.5,
-      reviewCount: 1247,
-      deliveryTime: '25-35 mins',
-      deliveryFee: 30,
-      minOrder: 150,
-      cuisine: 'North Indian',
+      reviewCount: 120,
+      deliveryTime: '25-35 min',
+      deliveryFee: 40,
+      minOrder: 200,
+      cuisine: 'Indian',
       isVeg: false,
       isPopular: true,
       isFastDelivery: true,
-      distance: '0.8 km',
+      distance: '1.2 km',
       offers: ['20% OFF', 'Free Delivery'],
     },
     {
-      id: 'rest-2',
-      type: 'restaurant',
-      name: 'Pizza Palace',
-      description: 'Modern Italian fusion with international flavors',
-      image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop&crop=center',
+      id: '2',
+      type: 'dish',
+      name: 'Margherita Pizza',
+      description: 'Classic pizza with fresh mozzarella and basil',
       rating: 4.3,
-      reviewCount: 892,
-      deliveryTime: '30-40 mins',
-      deliveryFee: 25,
-      minOrder: 200,
+      reviewCount: 85,
+      deliveryTime: '20-30 min',
+      deliveryFee: 30,
+      minOrder: 150,
+      price: 299,
+      restaurantName: 'Pizza Palace',
+      restaurantId: 'rest-2',
       cuisine: 'Italian',
       isVeg: true,
+      isPopular: true,
+      isFastDelivery: true,
+    },
+    {
+      id: '3',
+      type: 'restaurant',
+      name: 'Dragon Wok',
+      description: 'Delicious Chinese food with authentic taste',
+      rating: 4.2,
+      reviewCount: 200,
+      deliveryTime: '30-40 min',
+      deliveryFee: 35,
+      minOrder: 180,
+      cuisine: 'Chinese',
+      isVeg: false,
       isPopular: false,
       isFastDelivery: false,
-      distance: '1.2 km',
+      distance: '2.1 km',
       offers: ['Buy 1 Get 1'],
     },
     {
-      id: 'rest-3',
-      type: 'restaurant',
-      name: 'Biryani House',
-      description: 'Authentic Hyderabadi biryani and traditional dishes',
-      image: 'https://images.unsplash.com/photo-1563379091339-03246963d8a9?w=300&h=200&fit=crop&crop=center',
-      rating: 4.7,
-      reviewCount: 2156,
-      deliveryTime: '20-30 mins',
-      deliveryFee: 20,
-      minOrder: 180,
-      cuisine: 'Hyderabadi',
-      isVeg: false,
-      isPopular: true,
-      isFastDelivery: true,
-      distance: '0.5 km',
-      offers: ['30% OFF'],
-    },
-    
-    // Dish results
-    {
-      id: 'dish-1',
+      id: '4',
       type: 'dish',
       name: 'Chicken Biryani',
-      description: 'Aromatic basmati rice cooked with tender chicken and spices',
-      image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop&crop=center',
+      description: 'Aromatic basmati rice with tender chicken',
       rating: 4.6,
-      reviewCount: 234,
-      deliveryTime: '25-35 mins',
-      deliveryFee: 30,
-      minOrder: 180,
-      price: 280,
-      restaurantName: "Sharma's Kitchen",
-      restaurantId: 'rest-1',
-      isVeg: false,
-      isPopular: true,
-      isFastDelivery: true,
-      distance: '0.8 km',
-    },
-    {
-      id: 'dish-2',
-      type: 'dish',
-      name: 'Masala Dosa',
-      description: 'Crispy dosa filled with spiced potato mixture',
-      image: 'https://images.unsplash.com/photo-1563379091339-03246963d8a9?w=200&h=200&fit=crop&crop=center',
-      rating: 4.8,
-      reviewCount: 189,
-      deliveryTime: '20-30 mins',
-      deliveryFee: 20,
-      minOrder: 80,
-      price: 120,
-      restaurantName: 'Dosa Corner',
+      reviewCount: 150,
+      deliveryTime: '35-45 min',
+      deliveryFee: 25,
+      minOrder: 200,
+      price: 249,
+      restaurantName: 'Biryani House',
       restaurantId: 'rest-3',
-      isVeg: true,
-      isPopular: true,
-      isFastDelivery: true,
-      distance: '0.5 km',
-    },
-    {
-      id: 'dish-3',
-      type: 'dish',
-      name: 'Butter Chicken',
-      description: 'Tender chicken in rich tomato and butter gravy',
-      image: 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=200&h=200&fit=crop&crop=center',
-      rating: 4.4,
-      reviewCount: 167,
-      deliveryTime: '25-35 mins',
-      deliveryFee: 30,
-      minOrder: 160,
-      price: 320,
-      restaurantName: "Sharma's Kitchen",
-      restaurantId: 'rest-1',
+      cuisine: 'Indian',
       isVeg: false,
       isPopular: true,
-      isFastDelivery: true,
-      distance: '0.8 km',
+      isFastDelivery: false,
     },
   ];
 
   useEffect(() => {
-    startAnimations();
-    setSearchResults(sampleSearchResults);
-    setFilteredResults(sampleSearchResults);
-    setQuickFilters(quickFilterPresets);
-    setSelectedSort(sortOptions[0]);
+    // Start animation
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim()) {
-      const newSuggestions = getSearchSuggestions(searchQuery);
-      setSuggestions(newSuggestions);
-      setShowSuggestions(true);
-    } else {
-      setSuggestions([]);
-      setShowSuggestions(false);
-    }
-  }, [searchQuery]);
-
-  useEffect(() => {
-    applyFiltersAndSort();
-  }, [selectedFilters, quickFilters, selectedSort, searchResults]);
-
-  const startAnimations = () => {
-    Animated.parallel([
-      Animated.timing(searchBarAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(filtersAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(resultsAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const getSearchSuggestions = (query: string): SearchSuggestion[] => {
-    if (!query.trim()) return [];
-    
-    const suggestions: SearchSuggestion[] = [];
-    const lowerQuery = query.toLowerCase();
-    
-    trendingSearches.forEach(item => {
-      if (item.toLowerCase().includes(lowerQuery)) {
-        suggestions.push({ id: `trending-${item}`, text: item, type: 'suggestion', icon: 'trending-up' });
-      }
-    });
-    
-    const popularDishes = ['biryani', 'pizza', 'burger', 'noodles', 'rice', 'bread', 'curry', 'tandoori', 'kebab', 'dessert'];
-    popularDishes.forEach(dish => {
-      if (dish.includes(lowerQuery)) {
-        suggestions.push({
-          id: `dish-${dish}`,
-          text: dish,
-          type: 'suggestion',
-          icon: 'restaurant-menu',
-        });
-      }
-    });
-    
-    return suggestions.slice(0, 8);
-  };
-
-  const applyFiltersAndSort = () => {
-    let filtered = [...searchResults];
-    
-    // Apply selected filters
-    selectedFilters.forEach(filterId => {
-      const filter = searchFilters.find(f => f.id === filterId);
-      if (!filter) return;
-      
-      switch (filter.type) {
-        case 'cuisine':
-          filtered = filtered.filter(item => 
-            item.cuisine?.toLowerCase().includes(filter.name.toLowerCase())
-          );
-          break;
-        case 'price':
-          if (filter.name.includes('Under ₹200')) {
-            filtered = filtered.filter(item => (item.price || 0) < 200);
-          } else if (filter.name.includes('₹200-500')) {
-            filtered = filtered.filter(item => (item.price || 0) >= 200 && (item.price || 0) <= 500);
-          } else if (filter.name.includes('Above ₹500')) {
-            filtered = filtered.filter(item => (item.price || 0) > 500);
-          }
-          break;
-        case 'rating':
-          if (filter.name.includes('4.0+')) {
-            filtered = filtered.filter(item => item.rating >= 4.0);
-          } else if (filter.name.includes('4.5+')) {
-            filtered = filtered.filter(item => item.rating >= 4.5);
-          }
-          break;
-        case 'delivery':
-          filtered = filtered.filter(item => {
-            const deliveryTime = parseInt(item.deliveryTime.split('-')[0]);
-            if (filter.name.includes('Under 30 mins')) {
-              return deliveryTime < 30;
-            } else if (filter.name.includes('30-60 mins')) {
-              return deliveryTime >= 30 && deliveryTime <= 60;
-            }
-            return false;
-          });
-          break;
-      }
-    });
-    
-    // Apply quick filters
-    quickFilters.forEach(filter => {
-      if (filter.active) {
-        switch (filter.id) {
-          case 'veg-only':
-            filtered = filtered.filter(item => item.isVeg);
-            break;
-          case 'fast-delivery':
-            filtered = filtered.filter(item => item.isFastDelivery);
-            break;
-          case 'popular':
-            filtered = filtered.filter(item => item.isPopular);
-            break;
-          case 'budget-friendly':
-            filtered = filtered.filter(item => (item.price || 0) <= 200);
-            break;
-        }
-      }
-    });
-    
-    // Apply sorting
-    if (selectedSort) {
-      switch (selectedSort.id) {
-        case 'rating':
-          filtered.sort((a, b) => b.rating - a.rating);
-          break;
-        case 'delivery-time':
-          filtered.sort((a, b) => {
-            const timeA = parseInt(a.deliveryTime.split('-')[0]);
-            const timeB = parseInt(b.deliveryTime.split('-')[0]);
-            return timeA - timeB;
-          });
-          break;
-        case 'price-low':
-          filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
-          break;
-        case 'price-high':
-          filtered.sort((a, b) => (b.price || 0) - (a.price || 0));
-          break;
-        case 'distance':
-          filtered.sort((a, b) => {
-            const aDist = parseFloat(a.distance?.replace(' km', '') || '0');
-            const bDist = parseFloat(b.distance?.replace(' km', '') || '0');
-            return aDist - bDist;
-          });
-          break;
-      }
-    }
-    
-    setFilteredResults(filtered);
-  };
-
-  const performSearch = async () => {
-    setIsSearching(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    let results = [...sampleSearchResults];
-    
-    if (searchQuery.trim()) {
-      results = results.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.cuisine?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    setSearchResults(results);
-    setIsSearching(false);
-  };
-
+  // Search functionality
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim()) {
-      performSearch();
-    } else {
-      setSearchResults(sampleSearchResults);
-      setFilteredResults(sampleSearchResults);
+    
+    if (query.trim() === '') {
+      setSearchResults([]);
+      return;
     }
-  };
 
-  const handleFilterToggle = (filterId: string) => {
-    setSelectedFilters(prev => 
-      prev.includes(filterId)
-        ? prev.filter(id => id !== filterId)
-        : [...prev, filterId]
-    );
+    setIsSearching(true);
+    
+    // Simulate search delay
+    setTimeout(() => {
+      const filtered = sampleSearchResults.filter(item =>
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.cuisine?.toLowerCase().includes(query.toLowerCase()) ||
+        item.description?.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+    setIsSearching(false);
+    }, 500);
   };
 
   const handleQuickFilterToggle = (filterId: string) => {
-    setQuickFilters(prev => 
-      prev.map(f => 
-        f.id === filterId ? { ...f, active: !f.active } : f
+    setQuickFilters(prev =>
+      prev.map(filter =>
+        filter.id === filterId
+          ? { ...filter, active: !filter.active }
+          : filter
       )
     );
   };
 
-  const handleSuggestionPress = (suggestion: SearchSuggestion) => {
-    setSearchQuery(suggestion.text);
-    setShowSuggestions(false);
-    performSearch();
+  const clearSearch = () => {
+    setSearchQuery('');
+    setSearchResults([]);
+    setQuickFilters(prev => prev.map(f => ({ ...f, active: false })));
+  };
+
+  const handleSuggestionPress = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    handleSearch(suggestion);
     
-    if (!recentSearches.includes(suggestion.text)) {
-      setRecentSearches(prev => [suggestion.text, ...prev.slice(0, 4)]);
+    // Add to recent searches if not already there
+    if (!recentSearches.includes(suggestion)) {
+      // In a real app, this would update persistent storage
     }
   };
 
   const handleResultPress = (result: SearchResult) => {
     if (result.type === 'restaurant') {
       router.push(`/restaurant/${result.id}`);
-    } else {
+      } else {
       router.push(`/food-item/${result.id}`);
     }
   };
 
-  const clearAllFilters = () => {
-    setSelectedFilters([]);
-    setQuickFilters(quickFilterPresets.map(f => ({ ...f, active: false })));
-    setSelectedSort(sortOptions[0]);
+  // Apply filters to results
+  const getFilteredResults = () => {
+    let filtered = [...searchResults];
+    
+    quickFilters.forEach(filter => {
+      if (filter.active) {
+        switch (filter.id) {
+          case 'veg':
+            filtered = filtered.filter(item => item.isVeg);
+            break;
+          case 'fast':
+            filtered = filtered.filter(item => item.isFastDelivery);
+            break;
+          case 'popular':
+            filtered = filtered.filter(item => item.isPopular);
+            break;
+          case 'offers':
+            filtered = filtered.filter(item => item.offers && item.offers.length > 0);
+            break;
+        }
+      }
+    });
+    
+    return filtered;
   };
 
+  // Render functions
   const renderSearchBar = () => (
-    <Animated.View style={[styles.searchBarContainer, { opacity: searchBarAnim }]}>
+    <View style={styles.searchContainer}>
       <Surface style={styles.searchBar}>
-        <MaterialIcons name="search" size={20} color="#666" />
+        <MaterialCommunityIcons name="magnify" size={20} color="#666" />
         <TextInput
           ref={searchInputRef}
-          placeholder="Search for restaurants, dishes, cuisines..."
+          style={styles.searchInput}
+          placeholder="Search for restaurants, dishes..."
+          placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={handleSearch}
-          style={styles.searchInput}
-          onFocus={() => setShowSuggestions(true)}
+          autoFocus={false}
         />
         {searchQuery.length > 0 && (
-          <IconButton
-            icon="close"
-            size={20}
-            onPress={() => {
-              setSearchQuery('');
-              setSearchResults(sampleSearchResults);
-              setFilteredResults(sampleSearchResults);
-            }}
-            iconColor="#666"
-          />
+          <Pressable onPress={clearSearch}>
+            <MaterialCommunityIcons name="close" size={20} color="#666" />
+          </Pressable>
         )}
       </Surface>
-      
-      {/* Search Suggestions */}
-      {showSuggestions && suggestions.length > 0 && (
-        <Surface style={styles.suggestionsContainer}>
-          {suggestions.map((suggestion) => (
-            <Pressable
-              key={suggestion.id}
-              style={styles.suggestionItem}
-              onPress={() => handleSuggestionPress(suggestion)}
-            >
-              <MaterialIcons
-                name={suggestion.icon as any || 'search'}
-                size={20}
-                color="#666"
-                style={styles.suggestionIcon}
-              />
-              <Text style={styles.suggestionText}>{suggestion.text}</Text>
-              <MaterialIcons name="arrow-upward" size={16} color="#999" />
-            </Pressable>
-          ))}
-        </Surface>
-      )}
-    </Animated.View>
+    </View>
   );
 
   const renderQuickFilters = () => (
-    <Animated.View style={[styles.quickFiltersContainer, { opacity: filtersAnim }]}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+    <View style={styles.filtersContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtersContent}>
         {quickFilters.map((filter) => (
           <Chip
             key={filter.id}
-            mode={filter.active ? 'flat' : 'outlined'}
             selected={filter.active}
             onPress={() => handleQuickFilterToggle(filter.id)}
-            style={[styles.quickFilterChip, filter.active && styles.activeQuickFilterChip]}
+            style={[styles.filterChip, filter.active && styles.activeFilterChip]}
             textStyle={filter.active ? { color: 'white' } : {}}
             icon={filter.icon}
           >
@@ -544,225 +285,139 @@ export default function SearchScreen() {
           </Chip>
         ))}
       </ScrollView>
-    </Animated.View>
+        </View>
   );
 
-  const renderSearchFilters = () => (
-    <Animated.View style={[styles.filtersContainer, { opacity: filtersAnim }]}>
-      <View style={styles.filtersHeader}>
-        <Text style={styles.filtersTitle}>Filters</Text>
-        <Button
-          mode="text"
-          onPress={clearAllFilters}
-          textColor="#FF6B35"
-          compact
-        >
-          Clear All
-        </Button>
-      </View>
-      
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {searchFilters.map((filter) => (
-          <Chip
-            key={filter.id}
-            mode={selectedFilters.includes(filter.id) ? 'flat' : 'outlined'}
-            selected={selectedFilters.includes(filter.id)}
-            onPress={() => handleFilterToggle(filter.id)}
-            style={styles.filterChip}
-            textStyle={selectedFilters.includes(filter.id) ? { color: 'white' } : {}}
-          >
-            {filter.name} ({filter.count})
-          </Chip>
-        ))}
-      </ScrollView>
-    </Animated.View>
-  );
-
-  const renderSearchSuggestions = () => {
-    if (searchQuery.trim() || filteredResults.length > 0) return null;
+  const renderSuggestions = () => {
+    if (searchQuery.length > 0) return null;
     
     return (
-      <Animated.View style={[styles.suggestionsSection, { opacity: filtersAnim }]}>
-        {/* Recent Searches */}
-        <View style={styles.suggestionGroup}>
-          <Text style={styles.suggestionGroupTitle}>Recent Searches</Text>
-          <View style={styles.suggestionChips}>
+      <View style={styles.suggestionsContainer}>
+      {/* Recent Searches */}
+        <View style={styles.suggestionSection}>
+          <Text style={styles.sectionTitle}>Recent Searches</Text>
+          <View style={styles.suggestionsList}>
             {recentSearches.map((search, index) => (
-              <Chip
+              <Pressable
                 key={index}
-                mode="outlined"
-                onPress={() => handleSuggestionPress({ id: `recent-${index}`, text: search, type: 'recent' })}
-                style={styles.suggestionChip}
-                icon="history"
+                style={styles.suggestionItem}
+                onPress={() => handleSuggestionPress(search)}
               >
-                {search}
-              </Chip>
+                <MaterialCommunityIcons name="history" size={16} color="#666" />
+                <Text style={styles.suggestionText}>{search}</Text>
+              </Pressable>
             ))}
           </View>
         </View>
-        
-        {/* Trending Searches */}
-        <View style={styles.suggestionGroup}>
-          <Text style={styles.suggestionGroupTitle}>Trending Now</Text>
-          <View style={styles.suggestionChips}>
-            {trendingSearches.map((search, index) => (
-              <Chip
-                key={index}
-                mode="outlined"
-                onPress={() => handleSuggestionPress({ id: `trending-${index}`, text: search, type: 'trending' })}
-                style={styles.suggestionChip}
-                icon="trending-up"
+
+      {/* Trending Searches */}
+      <View style={styles.suggestionSection}>
+          <Text style={styles.sectionTitle}>Trending</Text>
+          <View style={styles.suggestionsList}>
+          {trendingSearches.map((search, index) => (
+              <Pressable
+              key={index}
+                style={styles.suggestionItem}
+                onPress={() => handleSuggestionPress(search)}
               >
-                {search}
-              </Chip>
-            ))}
-          </View>
+                <MaterialCommunityIcons name="trending-up" size={16} color="#FF6B35" />
+                <Text style={styles.suggestionText}>{search}</Text>
+              </Pressable>
+          ))}
         </View>
-      </Animated.View>
-    );
+      </View>
+    </View>
+  );
   };
 
-  const renderRestaurantCard = (restaurant: SearchResult) => (
+  const renderResultCard = (item: SearchResult) => (
     <Pressable
-      key={restaurant.id}
+      key={item.id}
       style={styles.resultCard}
-      onPress={() => handleResultPress(restaurant)}
+      onPress={() => handleResultPress(item)}
     >
-      <Surface style={styles.resultSurface}>
-        <View style={styles.resultHeader}>
-          <View style={styles.resultInfo}>
-            <Text style={styles.resultName}>{restaurant.name}</Text>
-            <Text style={styles.resultCuisine}>{restaurant.cuisine}</Text>
-            <Text style={styles.resultDescription} numberOfLines={2}>
-              {restaurant.description}
-            </Text>
-          </View>
-          
-          <View style={styles.resultImage}>
-            <MaterialIcons name="restaurant" size={40} color="#ccc" />
-          </View>
+      <Surface style={styles.cardSurface}>
+        <View style={styles.cardContent}>
+          {/* Header */}
+          <View style={styles.cardHeader}>
+            <View style={styles.cardInfo}>
+              <Text style={styles.itemName}>{item.name}</Text>
+              {item.type === 'dish' && item.restaurantName && (
+                <Text style={styles.restaurantName}>from {item.restaurantName}</Text>
+              )}
+              <Text style={styles.itemDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            </View>
+            <View style={styles.cardImage}>
+              <MaterialCommunityIcons 
+                name={item.type === 'restaurant' ? 'storefront' : 'food'} 
+                size={40} 
+                color="#ccc" 
+              />
+            </View>
         </View>
         
-        <View style={styles.resultDetails}>
-          <View style={styles.resultStats}>
+          {/* Stats */}
+          <View style={styles.cardStats}>
             <View style={styles.statItem}>
-              <MaterialIcons name="star" size={16} color="#FFD700" />
-              <Text style={styles.statText}>{restaurant.rating}</Text>
-              <Text style={styles.statSubtext}>({restaurant.reviewCount})</Text>
+              <MaterialCommunityIcons name="star" size={14} color="#FFD700" />
+              <Text style={styles.statText}>{item.rating}</Text>
+              <Text style={styles.statSubtext}>({item.reviewCount})</Text>
             </View>
             
             <View style={styles.statItem}>
-              <MaterialIcons name="access-time" size={16} color="#666" />
-              <Text style={styles.statText}>{restaurant.deliveryTime}</Text>
-            </View>
+              <MaterialCommunityIcons name="clock" size={14} color="#666" />
+              <Text style={styles.statText}>{item.deliveryTime}</Text>
+          </View>
             
             <View style={styles.statItem}>
-              <MaterialIcons name="delivery-dining" size={16} color="#666" />
-              <Text style={styles.statText}>₹{restaurant.deliveryFee}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.quickInfo}>
-            {restaurant.isVeg && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#4CAF50' }} compact>
-                Veg
-              </Chip>
-            )}
-            {restaurant.isPopular && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#FF9800' }} compact>
-                Popular
-              </Chip>
-            )}
-            {restaurant.isFastDelivery && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#2196F3' }} compact>
-                Fast
-              </Chip>
-            )}
-            {restaurant.distance && (
-              <Text style={styles.distanceText}>{restaurant.distance}</Text>
-            )}
-          </View>
+              <MaterialCommunityIcons name="truck-delivery" size={14} color="#666" />
+              <Text style={styles.statText}>₹{item.deliveryFee}</Text>
         </View>
         
-        {restaurant.offers && restaurant.offers.length > 0 && (
+            {item.type === 'dish' && item.price && (
+              <Text style={styles.priceText}>₹{item.price}</Text>
+            )}
+          </View>
+
+          {/* Tags */}
+          <View style={styles.cardTags}>
+            {item.isVeg && (
+              <Chip mode="flat" textStyle={{ color: 'white', fontSize: 10 }} style={{ backgroundColor: '#4CAF50', height: 24 }} compact>
+                VEG
+              </Chip>
+            )}
+            {item.isPopular && (
+              <Chip mode="flat" textStyle={{ color: 'white', fontSize: 10 }} style={{ backgroundColor: '#FF9800', height: 24 }} compact>
+                POPULAR
+              </Chip>
+            )}
+            {item.isFastDelivery && (
+              <Chip mode="flat" textStyle={{ color: 'white', fontSize: 10 }} style={{ backgroundColor: '#2196F3', height: 24 }} compact>
+                FAST
+              </Chip>
+            )}
+          </View>
+
+          {/* Offers */}
+          {item.offers && item.offers.length > 0 && (
           <View style={styles.offersContainer}>
-            {restaurant.offers.slice(0, 2).map((offer, index) => (
+              {item.offers.map((offer, index) => (
               <Chip key={index} mode="outlined" compact style={styles.offerChip}>
                 {offer}
               </Chip>
             ))}
           </View>
-        )}
-      </Surface>
-    </Pressable>
-  );
-
-  const renderDishCard = (dish: SearchResult) => (
-    <Pressable
-      key={dish.id}
-      style={styles.resultCard}
-      onPress={() => handleResultPress(dish)}
-    >
-      <Surface style={styles.resultSurface}>
-        <View style={styles.resultHeader}>
-          <View style={styles.resultInfo}>
-            <Text style={styles.resultName}>{dish.name}</Text>
-            <Text style={styles.resultCuisine}>{dish.restaurantName}</Text>
-            <Text style={styles.resultDescription} numberOfLines={2}>
-              {dish.description}
-            </Text>
-          </View>
-          
-          <View style={styles.resultImage}>
-            <MaterialIcons name="restaurant-menu" size={40} color="#ccc" />
-          </View>
-        </View>
-        
-        <View style={styles.resultDetails}>
-          <View style={styles.resultStats}>
-            <View style={styles.statItem}>
-              <MaterialIcons name="star" size={16} color="#FFD700" />
-              <Text style={styles.statText}>{dish.rating}</Text>
-              <Text style={styles.statSubtext}>({dish.reviewCount})</Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <MaterialIcons name="access-time" size={16} color="#666" />
-              <Text style={styles.statText}>{dish.deliveryTime}</Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <MaterialIcons name="delivery-dining" size={16} color="#666" />
-              <Text style={styles.statText}>₹{dish.deliveryFee}</Text>
-            </View>
-          </View>
-          
-          <View style={styles.quickInfo}>
-            {dish.isVeg && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#4CAF50' }} compact>
-                Veg
-              </Chip>
-            )}
-            {dish.isPopular && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#FF9800' }} compact>
-                Popular
-              </Chip>
-            )}
-            {dish.isFastDelivery && (
-              <Chip mode="flat" textStyle={{ color: 'white' }} style={{ backgroundColor: '#2196F3' }} compact>
-                Fast
-              </Chip>
-            )}
-            {dish.price && (
-              <Text style={styles.priceText}>₹{dish.price}</Text>
-            )}
-          </View>
+          )}
         </View>
       </Surface>
     </Pressable>
   );
 
-  const renderSearchResults = () => {
+  const renderResults = () => {
+    if (searchQuery.length === 0) return null;
+
     if (isSearching) {
       return (
         <View style={styles.loadingContainer}>
@@ -772,94 +427,53 @@ export default function SearchScreen() {
       );
     }
 
+    const filteredResults = getFilteredResults();
+
     if (filteredResults.length === 0) {
       return (
         <View style={styles.emptyContainer}>
-          <MaterialIcons name="search-off" size={64} color="#ccc" />
+          <MaterialCommunityIcons name="magnify-close" size={64} color="#ccc" />
           <Text style={styles.emptyTitle}>No results found</Text>
           <Text style={styles.emptySubtitle}>
             Try adjusting your search or filters
           </Text>
           <Button
             mode="outlined"
-            onPress={clearAllFilters}
-            style={styles.clearFiltersButton}
+            onPress={clearSearch}
+            style={styles.clearButton}
           >
-            Clear Filters
+            Clear Search
           </Button>
         </View>
-      );
+  );
     }
 
-    return (
-      <Animated.View style={[styles.resultsContainer, { opacity: resultsAnim }]}>
-        <View style={styles.resultsHeader}>
-          <Text style={styles.resultsTitle}>
-            {filteredResults.length} results found
-          </Text>
-          
-          <Menu
-            visible={showSortMenu}
-            onDismiss={() => setShowSortMenu(false)}
-            anchor={
-              <Button
-                mode="outlined"
-                onPress={() => setShowSortMenu(true)}
-                icon="sort"
-                compact
-              >
-                {selectedSort?.name || 'Sort'}
-              </Button>
-            }
-          >
-            {sortOptions.map((option) => (
-              <Menu.Item
-                key={option.id}
-                onPress={() => {
-                  setSelectedSort(option);
-                  setShowSortMenu(false);
-                }}
-                title={option.name}
-                leadingIcon={option.icon}
-              />
-            ))}
-          </Menu>
-        </View>
-        
-        <FlatList
-          data={filteredResults}
-          renderItem={({ item }) => 
-            item.type === 'dish' ? renderDishCard(item) : renderRestaurantCard(item)
-          }
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.resultsList}
-        />
-      </Animated.View>
+  return (
+      <View style={styles.resultsContainer}>
+        <Text style={styles.resultsTitle}>
+          {filteredResults.length} result{filteredResults.length !== 1 ? 's' : ''} found
+        </Text>
+        {filteredResults.map(renderResultCard)}
+      </View>
     );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Search Bar */}
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
       {renderSearchBar()}
-      
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Quick Filters */}
         {renderQuickFilters()}
         
-        {/* Search Filters */}
-        {renderSearchFilters()}
-        
-        {/* Search Suggestions (when no query) */}
-        {renderSearchSuggestions()}
-        
-        {/* Search Results */}
-        {renderSearchResults()}
-        
-        {/* Bottom spacing */}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        <ScrollView 
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {renderSuggestions()}
+          {renderResults()}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -869,14 +483,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f9fa',
   },
-  scrollView: {
+  content: {
     flex: 1,
   },
-  
-  // Search Bar Styles
-  searchBarContainer: {
+  searchContainer: {
     padding: 16,
-    paddingBottom: 12,
     backgroundColor: 'white',
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
@@ -884,289 +495,198 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 20,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    paddingVertical: 12,
+    elevation: 1,
   },
   searchInput: {
     flex: 1,
     marginLeft: 12,
-    backgroundColor: 'transparent',
-    elevation: 0,
-  },
-  searchInputText: {
     fontSize: 16,
-    color: '#333',
+    color: '#1a1a1a',
+    backgroundColor: 'transparent',
   },
-  
-  // Search Suggestions Styles
-  suggestionsContainer: {
-    marginTop: 8,
-    borderRadius: 16,
-    elevation: 4,
+  filtersContainer: {
     backgroundColor: 'white',
-    maxHeight: 200,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e9ecef',
+  },
+  filtersContent: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  filterChip: {
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f8f9fa',
+    borderColor: '#dee2e6',
+  },
+  activeFilterChip: {
+    backgroundColor: '#FF6B35',
+    borderColor: '#FF6B35',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  suggestionsContainer: {
+    padding: 16,
+  },
+  suggestionSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 12,
+  },
+  suggestionsList: {
+    gap: 8,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
-  },
-  suggestionIcon: {
-    marginRight: 12,
+    padding: 12,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    gap: 12,
   },
   suggestionText: {
-    flex: 1,
     fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  
-  // Quick Filters Styles
-  quickFiltersContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  quickFilterChip: {
-    marginRight: 12,
-    borderColor: '#dee2e6',
-    borderRadius: 20,
-    height: 36,
-  },
-  activeQuickFilterChip: {
-    backgroundColor: '#FF6B35',
-    borderColor: '#FF6B35',
-  },
-  
-  // Search Filters Styles
-  filtersContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  filtersHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  filtersTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#212529',
-  },
-  filterChip: {
-    marginRight: 12,
-    borderColor: '#dee2e6',
-    borderRadius: 18,
-    height: 32,
-  },
-  
-  // Search Suggestions Section Styles
-  suggestionsSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  suggestionGroup: {
-    marginBottom: 28,
-  },
-  suggestionGroupTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#212529',
-    marginBottom: 16,
-  },
-  suggestionChips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  suggestionChip: {
-    borderColor: '#dee2e6',
-    borderRadius: 20,
-    height: 36,
-  },
-  
-  // Search Results Styles
-  resultsContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  resultsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  resultsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
     color: '#495057',
   },
-  resultsList: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-  },
-  
-  // Result Card Styles
-  resultCard: {
-    marginBottom: 16,
-  },
-  resultSurface: {
-    padding: 20,
-    borderRadius: 20,
-    elevation: 2,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#f8f9fa',
-  },
-  resultHeader: {
-    flexDirection: 'row',
-    marginBottom: 18,
-  },
-  resultInfo: {
-    flex: 1,
-    marginRight: 16,
-  },
-  resultName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#212529',
-    marginBottom: 6,
-  },
-  resultCuisine: {
-    fontSize: 15,
-    color: '#6c757d',
-    marginBottom: 10,
-    fontStyle: 'italic',
-  },
-  resultDescription: {
-    fontSize: 15,
-    color: '#6c757d',
-    lineHeight: 22,
-  },
-  resultImage: {
-    width: 70,
-    height: 70,
-    borderRadius: 12,
-    backgroundColor: '#f8f9fa',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  
-  // Result Details Styles
-  resultDetails: {
-    gap: 16,
-  },
-  resultStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#212529',
-  },
-  statSubtext: {
-    fontSize: 13,
-    color: '#6c757d',
-  },
-  quickInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  priceText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF6B35',
-    marginLeft: 'auto',
-  },
-  distanceText: {
-    fontSize: 14,
-    color: '#6c757d',
-    marginLeft: 'auto',
-  },
-  
-  // Offers Styles
-  offersContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  offerChip: {
-    borderColor: '#4CAF50',
-    backgroundColor: '#E8F5E8',
-  },
-  
-  // Loading and Empty States
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
-    backgroundColor: '#f8f9fa',
+    paddingVertical: 60,
   },
   loadingText: {
     fontSize: 16,
     color: '#6c757d',
-    marginTop: 20,
+    marginTop: 16,
     fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 80,
-    backgroundColor: '#f8f9fa',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
   },
   emptyTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#212529',
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#495057',
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 16,
     color: '#6c757d',
     textAlign: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
     lineHeight: 22,
   },
-  clearFiltersButton: {
+  clearButton: {
     borderColor: '#FF6B35',
     borderRadius: 20,
-    paddingHorizontal: 24,
+  },
+  resultsContainer: {
+    padding: 16,
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 16,
+  },
+  resultCard: {
+    marginBottom: 16,
+  },
+  cardSurface: {
+    borderRadius: 12,
+    elevation: 2,
+    backgroundColor: 'white',
+  },
+  cardContent: {
+    padding: 16,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  cardInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  itemName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  restaurantName: {
+    fontSize: 14,
+    color: '#FF6B35',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  itemDescription: {
+    fontSize: 14,
+    color: '#6c757d',
+    lineHeight: 20,
+  },
+  cardImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#f8f9fa',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
+  },
+  statSubtext: {
+    fontSize: 12,
+    color: '#6c757d',
+  },
+  priceText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#FF6B35',
+    marginLeft: 'auto',
+  },
+  cardTags: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 8,
+  },
+  offersContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  offerChip: {
+    borderColor: '#4CAF50',
+    backgroundColor: '#E8F5E8',
+    height: 24,
   },
 }); 
