@@ -43,20 +43,23 @@ export default function Carousel({
     <View key={item.id} style={[styles.carouselItem, { width }]}>
       <Surface style={[styles.carouselCard, { backgroundColor: item.backgroundColor }]}>
         <View style={styles.carouselContent}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name={item.icon as any} size={32} color="white" />
+          <View style={styles.topRow}>
+            <View style={styles.iconContainer}>
+              <MaterialIcons name={item.icon as any} size={28} color="white" />
+            </View>
+            <Pressable 
+              style={styles.actionButton}
+              onPress={() => onItemPress?.(item)}
+            >
+              <Text style={styles.actionButtonText}>{item.actionText}</Text>
+              <MaterialIcons name="arrow-forward" size={14} color="white" />
+            </Pressable>
           </View>
+          
           <View style={styles.textContainer}>
             <Text style={styles.carouselTitle}>{item.title}</Text>
             <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
           </View>
-          <Pressable 
-            style={styles.actionButton}
-            onPress={() => onItemPress?.(item)}
-          >
-            <Text style={styles.actionButtonText}>{item.actionText}</Text>
-            <MaterialIcons name="arrow-forward" size={16} color="white" />
-          </Pressable>
         </View>
       </Surface>
     </View>
@@ -81,12 +84,20 @@ export default function Carousel({
       {/* Carousel Indicators */}
       <View style={styles.carouselIndicators}>
         {items.map((_, index) => (
-          <View
+          <Pressable
             key={index}
             style={[
               styles.carouselIndicator,
               index === currentIndex && styles.carouselIndicatorActive
             ]}
+            onPress={() => {
+              if (carouselRef.current) {
+                carouselRef.current.scrollTo({
+                  x: index * width,
+                  animated: true,
+                });
+              }
+            }}
           />
         ))}
       </View>
@@ -96,77 +107,78 @@ export default function Carousel({
 
 const styles = StyleSheet.create({
   carouselSection: {
+    marginTop: 20,
     marginBottom: 24,
   },
   carouselScrollView: {
-    height: 160,
+    height: 140,
   },
   carouselItem: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   carouselCard: {
-    height: 160,
-    borderRadius: 20,
-    padding: 24,
+    height: 140,
+    borderRadius: 16,
+    padding: 20,
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
+    shadowRadius: 8,
   },
   carouselContent: {
     flex: 1,
     justifyContent: 'space-between',
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   textContainer: {
     flex: 1,
-    justifyContent: 'center',
   },
   carouselTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: 'white',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 6,
   },
   carouselSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   actionButtonText: {
     color: 'white',
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
-    marginRight: 8,
+    marginRight: 4,
   },
   carouselIndicators: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: 16,
     paddingHorizontal: 20,
   },
   carouselIndicator: {
@@ -174,11 +186,11 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    marginHorizontal: 6,
+    marginHorizontal: 4,
   },
   carouselIndicatorActive: {
     backgroundColor: '#FF6B35',
-    width: 20,
+    width: 16,
     height: 6,
     borderRadius: 3,
   },

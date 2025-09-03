@@ -29,16 +29,13 @@ export default function HomeHeader({ userLocation, onLocationPress, hasLocation 
             ]}
             onPress={() => {
               Alert.alert(
-                'Edit Location',
-                'Choose how you want to set your location:',
+                'Update Location',
+                'Get your precise location for accurate delivery and nearby restaurant suggestions.',
                 [
                   { text: 'Cancel', style: 'cancel' },
-                  { text: 'Use Current Location', onPress: onLocationPress },
+                  { text: 'Detect My Location', onPress: onLocationPress },
                   { text: 'Enter Manually', onPress: () => {
-                    Alert.alert('Manual Input', 'Manual location input coming soon!');
-                  }},
-                  { text: 'Pick from Map', onPress: () => {
-                    Alert.alert('Map Picker', 'Map location picker coming soon!');
+                    Alert.alert('Coming Soon', 'Manual location entry will be available soon!');
                   }}
                 ]
               );

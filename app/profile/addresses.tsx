@@ -635,7 +635,7 @@ export default function AddressesScreen() {
                 mode="outlined"
                 value={formData.street}
                 onChangeText={(text) => setFormData(prev => ({ ...prev, street: text }))}
-                placeholder="e.g., Rajpur Village, Near Temple"
+                placeholder="e.g., MG Road, Near Metro Station"
                 style={styles.textInput}
                 outlineColor="#E0E0E0"
                 activeOutlineColor="#FF6B35"

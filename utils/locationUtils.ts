@@ -99,24 +99,44 @@ const getLocationFromBackend = async (latitude: number, longitude: number): Prom
  */
 export const getCurrentLocation = async (): Promise<LocationData> => {
   try {
-    // Request location permissions (still need expo-location for GPS)
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    
-    if (status !== 'granted') {
-      throw new Error('Location permission denied');
+    // Check if location services are enabled
+    const isLocationEnabled = await Location.hasServicesEnabledAsync();
+    if (!isLocationEnabled) {
+      throw new Error('Location services are disabled. Please enable location services in your device settings.');
     }
 
-    // Get current position with high accuracy
+    // Check and request location permissions
+    let { status } = await Location.getForegroundPermissionsAsync();
+    
+    if (status !== 'granted') {
+      const permissionResponse = await Location.requestForegroundPermissionsAsync();
+      status = permissionResponse.status;
+      
+      if (status !== 'granted') {
+        throw new Error('Location permission denied');
+      }
+    }
+
+    // Get current position with highest accuracy for precise coordinates
     const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
-      timeInterval: 3000,
-      distanceInterval: 5,
+      accuracy: Location.Accuracy.Highest,
+      timeInterval: 1000, // Update every 1 second for better accuracy
+      distanceInterval: 1, // Update every 1 meter movement
     });
 
     const coords = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
     };
+
+    // Log GPS accuracy for debugging
+    console.log('GPS Location Data:', {
+      latitude: coords.latitude,
+      longitude: coords.longitude,
+      accuracy: location.coords.accuracy,
+      altitude: location.coords.altitude,
+      timestamp: new Date(location.timestamp).toISOString()
+    });
 
     // Get address from our backend service
     const backendResponse = await getLocationFromBackend(coords.latitude, coords.longitude);
@@ -147,7 +167,9 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
       console.log('Falling back to expo-location...');
       
       const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+        accuracy: Location.Accuracy.Highest,
+        timeInterval: 1000,
+        distanceInterval: 1,
       });
 
       const coords = {

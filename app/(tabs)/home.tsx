@@ -35,7 +35,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(0);
-  const [userLocation, setUserLocation] = useState('Rajpur Village, Haridwar, UK');
+  const [userLocation, setUserLocation] = useState('Getting your location...');
   const [currentCoordinates, setCurrentCoordinates] = useState<{latitude: number, longitude: number} | null>(null);
   
   const router = useRouter();
@@ -49,7 +49,8 @@ export default function HomeScreen() {
         await getCurrentLocationData();
       } catch (error) {
         console.log('Location not available on app start:', error);
-        // Don't show error on app start, user can manually request location
+        // Set a fallback message instead of showing the loading message indefinitely
+        setUserLocation('Tap to set your location');
       }
     };
     
@@ -92,22 +93,32 @@ export default function HomeScreen() {
   const handleLocationPress = async () => {
     try {
       await getCurrentLocationData();
-      Alert.alert('Success', 'Location updated successfully!');
+      // No success alert - silent update
     } catch (error) {
       console.error('Location error:', error);
       if (error instanceof Error && error.message.includes('permission')) {
         Alert.alert(
           'Location Permission Required',
-          'Please enable location permissions in your device settings to use this feature.',
+          'This app needs location access to show nearby restaurants and delivery options. Please enable location permissions.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Open Settings', onPress: () => {
-              Alert.alert('Settings', 'Please go to your device settings and enable location permissions for this app.');
+            { text: 'Enable Location', onPress: () => {
+              // Try to request permission again
+              getCurrentLocationData().catch(() => {
+                Alert.alert('Settings', 'Please go to Settings > Privacy & Security > Location Services and enable location for this app.');
+              });
             }}
           ]
         );
       } else {
-        Alert.alert('Location Error', 'Could not detect your current location. Please check your GPS settings and try again.');
+        Alert.alert(
+          'Location Not Found', 
+          'Please turn on your device location and try again.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Try Again', onPress: handleLocationPress }
+          ]
+        );
       }
     }
   };

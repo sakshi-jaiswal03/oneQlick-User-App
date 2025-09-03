@@ -391,7 +391,7 @@ export default function AddEditAddressScreen() {
               mode="outlined"
               value={formData.area}
               onChangeText={(text) => handleInputChange('area', text)}
-              placeholder="e.g., Rajpur, Civil Lines"
+              placeholder="e.g., MG Road, Civil Lines"
               style={[styles.textInput, !validation.area && formData.area && styles.errorInput]}
               error={!validation.area && formData.area !== ''}
               right={
