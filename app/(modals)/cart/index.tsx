@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCart } from '../../../hooks/useCart';
 import { cartData, availableCoupons } from './cartData';
+import { getCurrentLocation } from '../../../utils/locationUtils';
 
 export default function CartScreen() {
   const router = useRouter();
@@ -21,12 +22,30 @@ export default function CartScreen() {
   
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [showCouponModal, setShowCouponModal] = useState(false);
+  const [userLocation, setUserLocation] = useState('Getting your location...');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   
   const displayCart = cart;
   const deliveryTime = '25-30 mins';
-  const deliveryAddress = 'Home - Konkan, Mumbai';
   const contactName = 'Taha';
   const contactPhone = '+91 98765 43210';
+
+  // Get location on component mount (same as home page)
+  useEffect(() => {
+    const initializeLocation = async () => {
+      try {
+        const locationData = await getCurrentLocation();
+        setUserLocation(locationData.displayName);
+        setIsLoadingLocation(false);
+      } catch (error) {
+        console.log('Location not available:', error);
+        setUserLocation('Tap to set your location');
+        setIsLoadingLocation(false);
+      }
+    };
+    
+    initializeLocation();
+  }, []);
 
   // Handle back button
   useFocusEffect(
@@ -44,6 +63,31 @@ export default function CartScreen() {
       return () => subscription.remove();
     }, [router, showCouponModal])
   );
+
+  // Handle location edit
+  const handleEditLocation = () => {
+    Alert.alert(
+      'Update Location',
+      'Get your precise location for accurate delivery and nearby restaurant suggestions.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Detect My Location', onPress: async () => {
+          setIsLoadingLocation(true);
+          setUserLocation('Getting your location...');
+          try {
+            const locationData = await getCurrentLocation();
+            setUserLocation(locationData.displayName);
+          } catch (error) {
+            setUserLocation('Tap to set your location');
+          }
+          setIsLoadingLocation(false);
+        }},
+        { text: 'Enter Manually', onPress: () => {
+          Alert.alert('Coming Soon', 'Manual location entry will be available soon!');
+        }}
+      ]
+    );
+  };
 
   // Calculate bill
   const calculateBill = () => {
@@ -99,6 +143,14 @@ export default function CartScreen() {
     setShowCouponModal(false);
   };
 
+  const handleQuickCouponApply = (coupon: any) => {
+    if (bill.subtotal < coupon.minOrder) {
+      Alert.alert('Invalid Coupon', `Minimum order amount is ₹${coupon.minOrder}`);
+      return;
+    }
+    setAppliedCoupon(coupon);
+  };
+
   const handleProceedToCheckout = () => {
     if (displayCart.items.length === 0) {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout.');
@@ -106,6 +158,15 @@ export default function CartScreen() {
     }
     router.push('/checkout');
   };
+
+  // Get top 2 most attractive coupons for header
+  const getHeaderCoupons = () => {
+    return availableCoupons
+      .filter(coupon => bill.subtotal >= coupon.minOrder) // Only eligible coupons
+      .slice(0, 2); // Show only 2 coupons
+  };
+
+  const headerCoupons = getHeaderCoupons();
 
   // Coupon Modal
   const renderCouponModal = () => (
@@ -133,7 +194,9 @@ export default function CartScreen() {
                 <View key={index} style={[styles.couponItem, !isEligible && styles.disabledCoupon]}>
                   <View style={styles.couponLeft}>
                     <Text style={styles.couponCode}>{coupon.code}</Text>
-                    <Text style={styles.couponTitle}>{coupon.title}</Text>
+                    <Text style={styles.couponTitle}>
+                      {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
+                    </Text>
                     <Text style={styles.couponDesc}>{coupon.description}</Text>
                     {!isEligible && (
                       <Text style={styles.minOrderText}>Min order ₹{coupon.minOrder}</Text>
@@ -174,20 +237,59 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* 1. Top Navigation with Delivery Time + Address */}
+      {/* Enhanced Top Navigation with Dynamic Address & Quick Coupons */}
       <View style={styles.topNav}>
         <Pressable onPress={() => router.push('/(tabs)/home')}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </Pressable>
         <View style={styles.navCenter}>
           <Text style={styles.deliveryTime}>{deliveryTime}</Text>
-          <Text style={styles.address}>{deliveryAddress}</Text>
+          <Pressable style={styles.addressContainer} onPress={handleEditLocation}>
+            <MaterialCommunityIcons name="map-marker" size={16} color="#FF6B35" />
+            <Text style={styles.address} numberOfLines={1}>
+              {isLoadingLocation ? 'Getting location...' : userLocation}
+            </Text>
+            <MaterialCommunityIcons name="pencil" size={14} color="#666" />
+          </Pressable>
         </View>
         <View style={styles.navRight} />
       </View>
 
+      {/* Quick Coupons Section (only if eligible coupons available) */}
+      {headerCoupons.length > 0 && (
+        <View style={styles.quickCouponsSection}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {headerCoupons.map((coupon, index) => (
+              <Pressable 
+                key={index} 
+                style={[styles.quickCouponCard, appliedCoupon?.code === coupon.code && styles.appliedQuickCoupon]}
+                onPress={() => appliedCoupon?.code === coupon.code ? setAppliedCoupon(null) : handleQuickCouponApply(coupon)}
+              >
+                <View style={styles.quickCouponHeader}>
+                  <MaterialCommunityIcons name="tag" size={16} color="#FF6B35" />
+                  <Text style={styles.quickCouponCode}>{coupon.code}</Text>
+                  {appliedCoupon?.code === coupon.code && (
+                    <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
+                  )}
+                </View>
+                <Text style={styles.quickCouponOffer}>
+                  {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
+                </Text>
+                <Text style={styles.quickCouponDesc} numberOfLines={2}>
+                  {coupon.description}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable style={styles.viewAllCouponsCard} onPress={() => setShowCouponModal(true)}>
+              <MaterialCommunityIcons name="plus-circle" size={20} color="#FF6B35" />
+              <Text style={styles.viewAllText}>View All</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+      )}
+
       <ScrollView style={styles.content}>
-        {/* 1. Items - Just dish names with veg/non-veg icons */}
+        {/* Items - Just dish names with veg/non-veg icons */}
         <View style={styles.section}>
           {displayCart.items.map((item) => {
             const foodItem = item.foodItem || {};
@@ -228,7 +330,7 @@ export default function CartScreen() {
           })}
         </View>
 
-        {/* 2. Available Coupons */}
+        {/* Available Coupons */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Coupons</Text>
           {appliedCoupon ? (
@@ -248,7 +350,7 @@ export default function CartScreen() {
           )}
         </View>
 
-        {/* 3. Time taking for delivery */}
+        {/* Time taking for delivery */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Delivery Time</Text>
           <View style={styles.deliveryBox}>
@@ -257,7 +359,7 @@ export default function CartScreen() {
           </View>
         </View>
 
-        {/* 4. Name and phone number for delivery contact */}
+        {/* Name and phone number for delivery contact */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Delivery Contact</Text>
           <View style={styles.contactBox}>
@@ -269,7 +371,7 @@ export default function CartScreen() {
           </View>
         </View>
 
-        {/* 5. Bill and all other */}
+        {/* Bill and all other */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Bill Summary</Text>
           <View style={styles.billBox}>
@@ -308,7 +410,7 @@ export default function CartScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* 6. Bottom section with policy and payment (no bottom nav) */}
+      {/* Bottom section with policy and payment (no bottom nav) */}
       <View style={styles.bottomSection}>
         <Text style={styles.policyText}>
           By placing this order, you agree to our Terms of Service and Privacy Policy
@@ -349,13 +451,88 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#000',
   },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    maxWidth: 250,
+  },
   address: {
     fontSize: 12,
     color: '#666',
-    marginTop: 2,
+    flex: 1,
   },
   navRight: {
     width: 24,
+  },
+  
+  // Quick Coupons Section
+  quickCouponsSection: {
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  quickCouponCard: {
+    backgroundColor: '#fff8f5',
+    borderWidth: 1,
+    borderColor: '#ffe0d6',
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    width: 160,
+    minHeight: 90,
+  },
+  appliedQuickCoupon: {
+    backgroundColor: '#f0f9f0',
+    borderColor: '#4CAF50',
+  },
+  quickCouponHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  quickCouponCode: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF6B35',
+    flex: 1,
+  },
+  quickCouponOffer: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 4,
+  },
+  quickCouponDesc: {
+    fontSize: 10,
+    color: '#666',
+    lineHeight: 12,
+  },
+  viewAllCouponsCard: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 80,
+    minHeight: 90,
+    gap: 4,
+  },
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF6B35',
+    textAlign: 'center',
   },
   
   // Content
