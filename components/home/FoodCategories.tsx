@@ -80,14 +80,14 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
 
 const styles = StyleSheet.create({
   section: {
-    paddingVertical: 20,
+    paddingVertical: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,

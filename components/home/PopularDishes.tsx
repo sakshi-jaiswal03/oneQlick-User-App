@@ -159,15 +159,15 @@ export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProp
 const styles = StyleSheet.create({
   section: {
     backgroundColor: 'white',
-    paddingVertical: 24,
-    marginBottom: 8,
+    paddingVertical: 12,
+    marginBottom: 2,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   titleContainer: {
     flex: 1,
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
   },
   filtersContainer: {
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 12,
   },
   filterTag: {
     flexDirection: 'row',
@@ -292,9 +292,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 16,
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },

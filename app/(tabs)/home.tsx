@@ -267,8 +267,97 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
+        {/* Special Offers Banner */}
+        <View style={styles.specialOfferSection}>
+          <LinearGradient
+            colors={['#FF6B35', '#FF8562', '#FFA726']}
+            style={styles.offerBanner}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <View style={styles.offerContent}>
+              <View style={styles.offerTextContainer}>
+                <View style={styles.offerBadge}>
+                  <MaterialCommunityIcons name="lightning-bolt" size={14} color="#FF6B35" />
+                  <Text style={styles.offerBadgeText}>LIMITED TIME</Text>
+                </View>
+                <Text style={styles.offerTitle}>Get 50% OFF</Text>
+                <Text style={styles.offerSubtitle}>on your first order above ₹299</Text>
+                <Text style={styles.offerCode}>Use code: WELCOME50</Text>
+              </View>
+              <View style={styles.offerIconContainer}>
+                <MaterialCommunityIcons name="gift" size={40} color="white" />
+              </View>
+            </View>
+          </LinearGradient>
+        </View>
+
+        {/* App Features Section */}
+        <View style={styles.featuresSection}>
+          <View style={styles.featuresHeader}>
+            <MaterialCommunityIcons name="star" size={20} color="#FF6B35" />
+            <Text style={styles.featuresTitle}>Why choose oneQlick?</Text>
+          </View>
+          
+          <View style={styles.featuresGrid}>
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <MaterialCommunityIcons name="clock-fast" size={24} color="#4CAF50" />
+              </View>
+              <Text style={styles.featureTitle}>Fast Delivery</Text>
+              <Text style={styles.featureDescription}>Average 25 min delivery</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <MaterialCommunityIcons name="shield-check" size={24} color="#2196F3" />
+              </View>
+              <Text style={styles.featureTitle}>Quality Food</Text>
+              <Text style={styles.featureDescription}>Fresh & hygienic</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <MaterialCommunityIcons name="wallet" size={24} color="#9C27B0" />
+              </View>
+              <Text style={styles.featureTitle}>Best Prices</Text>
+              <Text style={styles.featureDescription}>No hidden charges</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Customer Testimonial */}
+        <View style={styles.testimonialSection}>
+          <View style={styles.testimonialCard}>
+            <View style={styles.testimonialHeader}>
+              <View style={styles.userAvatar}>
+                <MaterialCommunityIcons name="account" size={20} color="#FF6B35" />
+              </View>
+              <View style={styles.userInfo}>
+                <Text style={styles.userName}>Priya S.</Text>
+                <View style={styles.ratingContainer}>
+                  {[1,2,3,4,5].map((star) => (
+                    <MaterialCommunityIcons key={star} name="star" size={12} color="#FFD700" />
+                  ))}
+                </View>
+              </View>
+            </View>
+            <Text style={styles.testimonialText}>
+              "Amazing food quality and super fast delivery! oneQlick has become my go-to app for ordering food. Highly recommended! 🍕"
+            </Text>
+          </View>
+        </View>
+
+        {/* Made in India Section */}
+        <View style={styles.madeInIndiaSection}>
+          <View style={styles.madeInIndiaContainer}>
+            <MaterialCommunityIcons name="heart" size={16} color="#FF6B35" />
+            <Text style={styles.madeInIndiaText}>Made in India with</Text>
+            <MaterialCommunityIcons name="heart" size={16} color="#FF6B35" />
+            <Text style={styles.madeInIndiaText}>Love</Text>
+          </View>
+          <Text style={styles.madeInIndiaSubtext}>Proudly serving delicious food across the nation</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -283,13 +372,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
-    paddingTop: 0,
+    paddingBottom: 10,
   },
   searchSection: {
     paddingHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 24,
+    marginTop: 8,
+    marginBottom: 12,
   },
   searchBar: {
     flexDirection: 'row',
@@ -314,8 +402,8 @@ const styles = StyleSheet.create({
   },
   restaurantsSection: {
     backgroundColor: 'white',
-    marginBottom: 6,
-    paddingVertical: 20,
+    marginBottom: 2,
+    paddingVertical: 12,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -361,9 +449,9 @@ const styles = StyleSheet.create({
   },
   moreExploreSection: {
     backgroundColor: 'white',
-    paddingVertical: 20,
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    marginBottom: 6,
+    marginBottom: 2,
   },
   exploreHeader: {
     flexDirection: 'row',
@@ -420,7 +508,190 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
   },
-  bottomSpacing: {
-    height: 60,
+  specialOfferSection: {
+    paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  offerBanner: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 3,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  offerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+  },
+  offerTextContainer: {
+    flex: 1,
+  },
+  offerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+    gap: 4,
+  },
+  offerBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FF6B35',
+  },
+  offerTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: 'white',
+    marginBottom: 4,
+  },
+  offerSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  offerCode: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '700',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  offerIconContainer: {
+    opacity: 0.3,
+  },
+
+  featuresSection: {
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 2,
+  },
+  featuresHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  featuresTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  featuresGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  featureItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  featureTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+
+  testimonialSection: {
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 0,
+  },
+  testimonialCard: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: '#FF6B35',
+  },
+  testimonialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  userAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 2,
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  testimonialText: {
+    fontSize: 13,
+    color: '#333',
+    lineHeight: 20,
+    fontStyle: 'italic',
+    fontWeight: '500',
+  },
+
+  madeInIndiaSection: {
+    backgroundColor: 'white',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  madeInIndiaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  madeInIndiaText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  madeInIndiaSubtext: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    fontWeight: '500',
   },
 }); 
