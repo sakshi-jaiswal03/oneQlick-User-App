@@ -7,7 +7,6 @@ import {
   Alert,
   BackHandler,
   Text,
-  Modal,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +20,6 @@ export default function CartScreen() {
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
   
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [showCouponModal, setShowCouponModal] = useState(false);
   const [userLocation, setUserLocation] = useState('Getting your location...');
   const [isLoadingLocation, setIsLoadingLocation] = useState(true);
   
@@ -51,17 +49,13 @@ export default function CartScreen() {
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        if (showCouponModal) {
-          setShowCouponModal(false);
-          return true;
-        }
         router.push('/(tabs)/home');
         return true;
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
       return () => subscription.remove();
-    }, [router, showCouponModal])
+    }, [router])
   );
 
   // Handle location edit
@@ -143,13 +137,7 @@ export default function CartScreen() {
     setShowCouponModal(false);
   };
 
-  const handleQuickCouponApply = (coupon: any) => {
-    if (bill.subtotal < coupon.minOrder) {
-      Alert.alert('Invalid Coupon', `Minimum order amount is ₹${coupon.minOrder}`);
-      return;
-    }
-    setAppliedCoupon(coupon);
-  };
+
 
   const handleProceedToCheckout = () => {
     if (displayCart.items.length === 0) {
@@ -159,66 +147,12 @@ export default function CartScreen() {
     router.push('/checkout');
   };
 
-  // Get top 2 most attractive coupons for header
-  const getHeaderCoupons = () => {
-    return availableCoupons
-      .filter(coupon => bill.subtotal >= coupon.minOrder) // Only eligible coupons
-      .slice(0, 2); // Show only 2 coupons
+    // Get eligible coupons for display
+  const getEligibleCoupons = () => {
+    return availableCoupons.filter(coupon => bill.subtotal >= coupon.minOrder).slice(0, 2);
   };
 
-  const headerCoupons = getHeaderCoupons();
-
-  // Coupon Modal
-  const renderCouponModal = () => (
-    <Modal
-      visible={showCouponModal}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={() => setShowCouponModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.couponModal}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Available Coupons</Text>
-            <Pressable onPress={() => setShowCouponModal(false)}>
-              <MaterialCommunityIcons name="close" size={24} color="#666" />
-            </Pressable>
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            {availableCoupons.map((coupon, index) => {
-              const isEligible = bill.subtotal >= coupon.minOrder;
-              const isApplied = appliedCoupon?.code === coupon.code;
-              
-              return (
-                <View key={index} style={[styles.couponItem, !isEligible && styles.disabledCoupon]}>
-                  <View style={styles.couponLeft}>
-                    <Text style={styles.couponCode}>{coupon.code}</Text>
-                    <Text style={styles.couponTitle}>
-                      {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
-                    </Text>
-                    <Text style={styles.couponDesc}>{coupon.description}</Text>
-                    {!isEligible && (
-                      <Text style={styles.minOrderText}>Min order ₹{coupon.minOrder}</Text>
-                    )}
-                  </View>
-                  <View style={styles.couponRight}>
-                    {isApplied ? (
-                      <Text style={styles.appliedText}>Applied</Text>
-                    ) : isEligible ? (
-                      <Pressable style={styles.applyBtn} onPress={() => handleApplyCoupon(coupon)}>
-                        <Text style={styles.applyText}>Apply</Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
+  const eligibleCoupons = getEligibleCoupons();
 
   // Empty cart
   if (displayCart.items.length === 0) {
@@ -237,7 +171,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Enhanced Top Navigation with Dynamic Address & Quick Coupons */}
+      {/* Enhanced Top Navigation with Dynamic Address */}
       <View style={styles.topNav}>
         <Pressable onPress={() => router.push('/(tabs)/home')}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
@@ -255,39 +189,6 @@ export default function CartScreen() {
         <View style={styles.navRight} />
       </View>
 
-      {/* Quick Coupons Section (only if eligible coupons available) */}
-      {headerCoupons.length > 0 && (
-        <View style={styles.quickCouponsSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {headerCoupons.map((coupon, index) => (
-              <Pressable 
-                key={index} 
-                style={[styles.quickCouponCard, appliedCoupon?.code === coupon.code && styles.appliedQuickCoupon]}
-                onPress={() => appliedCoupon?.code === coupon.code ? setAppliedCoupon(null) : handleQuickCouponApply(coupon)}
-              >
-                <View style={styles.quickCouponHeader}>
-                  <MaterialCommunityIcons name="tag" size={16} color="#FF6B35" />
-                  <Text style={styles.quickCouponCode}>{coupon.code}</Text>
-                  {appliedCoupon?.code === coupon.code && (
-                    <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-                  )}
-                </View>
-                <Text style={styles.quickCouponOffer}>
-                  {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
-                </Text>
-                <Text style={styles.quickCouponDesc} numberOfLines={2}>
-                  {coupon.description}
-                </Text>
-              </Pressable>
-            ))}
-            <Pressable style={styles.viewAllCouponsCard} onPress={() => setShowCouponModal(true)}>
-              <MaterialCommunityIcons name="plus-circle" size={20} color="#FF6B35" />
-              <Text style={styles.viewAllText}>View All</Text>
-            </Pressable>
-          </ScrollView>
-        </View>
-      )}
-
       <ScrollView style={styles.content}>
         {/* Items - Just dish names with veg/non-veg icons */}
         <View style={styles.section}>
@@ -298,10 +199,10 @@ export default function CartScreen() {
             return (
               <View key={item.id} style={styles.dishItem}>
                 <View style={styles.dishLeft}>
-                  <View style={[styles.vegIcon, { backgroundColor: foodItem.isVeg ? '#0f8644' : '#e43b4f' }]}>
+                  <View style={[styles.vegIcon, { backgroundColor: foodItem.isVeg ? '#4CAF50' : '#F44336' }]}>
                     <MaterialCommunityIcons 
-                      name={foodItem.isVeg ? 'circle' : 'triangle'} 
-                      size={8} 
+                      name={foodItem.isVeg ? 'leaf' : 'food-drumstick'} 
+                      size={10} 
                       color="#fff" 
                     />
                   </View>
@@ -333,7 +234,38 @@ export default function CartScreen() {
         {/* Available Coupons */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Coupons</Text>
-          {appliedCoupon ? (
+          
+          {/* Quick Apply Coupons */}
+          {eligibleCoupons.length > 0 && (
+            <View style={styles.quickCouponsContainer}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {eligibleCoupons.map((coupon, index) => (
+                  <Pressable 
+                    key={index} 
+                    style={[styles.quickCouponCard, appliedCoupon?.code === coupon.code && styles.appliedQuickCoupon]}
+                    onPress={() => appliedCoupon?.code === coupon.code ? setAppliedCoupon(null) : handleApplyCoupon(coupon)}
+                  >
+                    <View style={styles.quickCouponHeader}>
+                      <MaterialCommunityIcons name="tag" size={16} color="#FF6B35" />
+                      <Text style={styles.quickCouponCode}>{coupon.code}</Text>
+                      {appliedCoupon?.code === coupon.code && (
+                        <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
+                      )}
+                    </View>
+                    <Text style={styles.quickCouponOffer}>
+                      {coupon.type === 'percentage' ? `${coupon.discount}% OFF` : `₹${coupon.discount} OFF`}
+                    </Text>
+                    <Text style={styles.quickCouponDesc} numberOfLines={2}>
+                      {coupon.description}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Applied Coupon Display */}
+          {appliedCoupon && (
             <View style={styles.appliedCouponBox}>
               <MaterialCommunityIcons name="check-circle" size={20} color="#4CAF50" />
               <Text style={styles.appliedCouponText}>{appliedCoupon.code} applied • Saved ₹{bill.discount}</Text>
@@ -341,12 +273,6 @@ export default function CartScreen() {
                 <MaterialCommunityIcons name="close" size={20} color="#666" />
               </Pressable>
             </View>
-          ) : (
-            <Pressable style={styles.couponBox} onPress={() => setShowCouponModal(true)}>
-              <MaterialCommunityIcons name="tag" size={20} color="#FF6B35" />
-              <Text style={styles.couponText}>Apply Coupon</Text>
-              <MaterialCommunityIcons name="chevron-right" size={20} color="#666" />
-            </Pressable>
           )}
         </View>
 
@@ -410,7 +336,7 @@ export default function CartScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Bottom section with policy and payment (no bottom nav) */}
+      {/* Bottom Payment Section */}
       <View style={styles.bottomSection}>
         <Text style={styles.policyText}>
           By placing this order, you agree to our Terms of Service and Privacy Policy
@@ -419,8 +345,6 @@ export default function CartScreen() {
           <Text style={styles.payBtnText}>Pay ₹{bill.total.toFixed(0)} & Place Order</Text>
         </Pressable>
       </View>
-
-      {renderCouponModal()}
     </SafeAreaView>
   );
 }
@@ -471,70 +395,6 @@ const styles = StyleSheet.create({
     width: 24,
   },
   
-  // Quick Coupons Section
-  quickCouponsSection: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  quickCouponCard: {
-    backgroundColor: '#fff8f5',
-    borderWidth: 1,
-    borderColor: '#ffe0d6',
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 12,
-    width: 160,
-    minHeight: 90,
-  },
-  appliedQuickCoupon: {
-    backgroundColor: '#f0f9f0',
-    borderColor: '#4CAF50',
-  },
-  quickCouponHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    gap: 4,
-  },
-  quickCouponCode: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FF6B35',
-    flex: 1,
-  },
-  quickCouponOffer: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 4,
-  },
-  quickCouponDesc: {
-    fontSize: 10,
-    color: '#666',
-    lineHeight: 12,
-  },
-  viewAllCouponsCard: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 80,
-    minHeight: 90,
-    gap: 4,
-  },
-  viewAllText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FF6B35',
-    textAlign: 'center',
-  },
-  
   // Content
   content: {
     flex: 1,
@@ -568,9 +428,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   vegIcon: {
-    width: 16,
-    height: 16,
-    borderRadius: 2,
+    width: 18,
+    height: 18,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -613,22 +473,6 @@ const styles = StyleSheet.create({
   },
   
   // Coupons
-  couponBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff8f5',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ffe0d6',
-    gap: 8,
-  },
-  couponText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#FF6B35',
-    flex: 1,
-  },
   appliedCouponBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -644,6 +488,48 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#4CAF50',
     flex: 1,
+  },
+  
+  // Quick Coupons
+  quickCouponsContainer: {
+    marginBottom: 12,
+  },
+  quickCouponCard: {
+    backgroundColor: '#fff8f5',
+    borderWidth: 1,
+    borderColor: '#ffe0d6',
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    width: 160,
+    minHeight: 90,
+  },
+  appliedQuickCoupon: {
+    backgroundColor: '#f0f9f0',
+    borderColor: '#4CAF50',
+  },
+  quickCouponHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  quickCouponCode: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF6B35',
+    flex: 1,
+  },
+  quickCouponOffer: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 4,
+  },
+  quickCouponDesc: {
+    fontSize: 10,
+    color: '#666',
+    lineHeight: 12,
   },
   
   // Delivery Time
@@ -767,90 +653,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#fff',
-  },
-  
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  couponModal: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    maxHeight: '60%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 16,
-  },
-  couponItem: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    marginBottom: 12,
-  },
-  disabledCoupon: {
-    opacity: 0.5,
-  },
-  couponLeft: {
-    flex: 1,
-  },
-  couponCode: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FF6B35',
-    marginBottom: 4,
-  },
-  couponTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 4,
-  },
-  couponDesc: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-  },
-  minOrderText: {
-    fontSize: 12,
-    color: '#F44336',
-  },
-  couponRight: {
-    justifyContent: 'center',
-  },
-  applyBtn: {
-    backgroundColor: '#FF6B35',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  applyText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  appliedText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#4CAF50',
   },
 }); 

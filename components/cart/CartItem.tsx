@@ -33,8 +33,8 @@ export default function CartItem({ item, onQuantityChange, onRemove }: CartItemP
           { backgroundColor: item.foodItem.isVeg ? '#4CAF50' : '#F44336' }
         ]}>
           <MaterialCommunityIcons 
-            name={item.foodItem.isVeg ? 'circle' : 'triangle'} 
-            size={8} 
+            name={item.foodItem.isVeg ? 'leaf' : 'food-drumstick'} 
+            size={10} 
             color="#fff" 
           />
         </View>
