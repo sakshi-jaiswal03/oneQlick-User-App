@@ -328,8 +328,8 @@ export default function HomeScreen() {
 
         {/* Customer Testimonials Carousel */}
         <View style={styles.testimonialSection}>
-          <View style={styles.testimonialHeader}>
-            <MaterialCommunityIcons name="account-heart" size={20} color="#FF6B35" />
+          <View style={styles.testimonialSectionHeader}>
+            <MaterialCommunityIcons name="heart" size={20} color="#FF6B35" />
             <Text style={styles.testimonialSectionTitle}>What our customers say</Text>
           </View>
           
@@ -338,47 +338,57 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.testimonialsContainer}
             decelerationRate="fast"
-            snapToInterval={280}
+            snapToInterval={300}
             snapToAlignment="start"
           >
             {[
               {
                 id: 1,
-                name: "Priya S.",
-                avatar: "account",
+                name: "Priya Sharma",
                 rating: 5,
-                text: "Amazing food quality and super fast delivery! oneQlick has become my go-to app for ordering food. Highly recommended! 🍕",
-                order: "Ordered Pizza"
+                text: "Amazing food quality and super fast delivery! oneQlick has become my go-to app for ordering food.",
+                order: "Pizza & Pasta",
+                location: "Mumbai",
+                bgColor: '#FF6B35'
               },
               {
                 id: 2,
-                name: "Rajesh K.",
-                avatar: "account-circle",
+                name: "Rajesh Kumar",
                 rating: 5,
-                text: "Love the variety of restaurants available. The app is user-friendly and delivery is always on time. Great service! 🌟",
-                order: "Ordered Biryani"
+                text: "Love the variety of restaurants available. The app is user-friendly and delivery is always on time.",
+                order: "Biryani Special",
+                location: "Delhi",
+                bgColor: '#4CAF50'
               },
               {
                 id: 3,
-                name: "Anjali M.",
-                avatar: "account-heart",
+                name: "Anjali Mehta",
                 rating: 4,
-                text: "Fresh ingredients, hygienic packaging, and excellent customer support. The offers are amazing too! 😋",
-                order: "Ordered Healthy Meal"
+                text: "Fresh ingredients, hygienic packaging, and excellent customer support. The offers are amazing too!",
+                order: "Healthy Bowl",
+                location: "Bangalore",
+                bgColor: '#2196F3'
               },
               {
                 id: 4,
-                name: "Vikram T.",
-                avatar: "account-star",
+                name: "Vikram Singh",
                 rating: 5,
-                text: "Best food delivery app I've used! Wide range of cuisines and the quality is consistently good. Keep it up! 👍",
-                order: "Ordered South Indian"
+                text: "Best food delivery app I've used! Wide range of cuisines and the quality is consistently good.",
+                order: "South Indian Thali",
+                location: "Chennai",
+                bgColor: '#9C27B0'
               }
             ].map((review, index) => (
               <View key={review.id} style={[styles.testimonialCard, { marginLeft: index === 0 ? 16 : 8, marginRight: 8 }]}>
-                <View style={styles.testimonialHeader}>
-                  <View style={styles.userAvatar}>
-                    <MaterialCommunityIcons name={review.avatar as any} size={20} color="#FF6B35" />
+                <View style={styles.quoteIcon}>
+                  <MaterialCommunityIcons name="format-quote-open" size={20} color={review.bgColor} />
+                </View>
+                
+                <Text style={styles.testimonialText}>"{review.text}"</Text>
+                
+                <View style={styles.testimonialFooter}>
+                  <View style={[styles.userAvatar, { backgroundColor: review.bgColor }]}>
+                    <Text style={styles.userInitial}>{review.name.charAt(0)}</Text>
                   </View>
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>{review.name}</Text>
@@ -392,25 +402,28 @@ export default function HomeScreen() {
                         />
                       ))}
                     </View>
-                    <Text style={styles.orderInfo}>{review.order}</Text>
+                    <Text style={styles.orderInfo}>Ordered {review.order} • {review.location}</Text>
                   </View>
                 </View>
-                <Text style={styles.testimonialText}>{review.text}</Text>
               </View>
             ))}
             <View style={{ width: 16 }} />
           </ScrollView>
         </View>
 
-        {/* Made in India Section */}
+        {/* Made for India Section */}
         <View style={styles.madeInIndiaSection}>
-          <View style={styles.madeInIndiaContainer}>
-            <MaterialCommunityIcons name="heart" size={16} color="#FF6B35" />
-            <Text style={styles.madeInIndiaText}>Made in India with</Text>
-            <MaterialCommunityIcons name="heart" size={16} color="#FF6B35" />
-            <Text style={styles.madeInIndiaText}>Love</Text>
+          <View style={styles.brandContainer}>
+            <MaterialCommunityIcons name="map-marker" size={20} color="#FF6B35" />
+            <Text style={styles.brandTitle}>Made for India</Text>
+            <MaterialCommunityIcons name="heart" size={16} color="#E91E63" />
           </View>
-          <Text style={styles.madeInIndiaSubtext}>Proudly serving delicious food across the nation</Text>
+          <Text style={styles.brandSubtitle}>Crafted in Konkan, served with passion</Text>
+          <View style={styles.brandFooter}>
+            <MaterialCommunityIcons name="food-variant" size={14} color="#4CAF50" />
+            <Text style={styles.brandFooterText}>Authentic • Fresh • Local</Text>
+            <MaterialCommunityIcons name="leaf" size={14} color="#4CAF50" />
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -679,7 +692,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     paddingVertical: 24,
     paddingHorizontal: 0,
-    marginBottom: 0,
+    marginBottom: 20,
+  },
+  testimonialSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 20,
   },
   testimonialSectionTitle: {
     fontSize: 18,
@@ -690,39 +710,47 @@ const styles = StyleSheet.create({
     paddingRight: 16,
   },
   testimonialCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B35',
-    width: 260,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 20,
+    width: 280,
+    borderWidth: 1,
+    borderColor: '#f0f0f0',
   },
-  testimonialHeader: {
+  quoteIcon: {
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  testimonialText: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    fontStyle: 'italic',
+    fontWeight: '500',
+    marginBottom: 20,
+  },
+  testimonialFooter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 20,
-    paddingHorizontal: 16,
   },
   userAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'white',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  userInitial: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'white',
   },
   userInfo: {
     flex: 1,
   },
   userName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 4,
@@ -730,18 +758,11 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     gap: 2,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   orderInfo: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#666',
-    fontWeight: '500',
-  },
-  testimonialText: {
-    fontSize: 13,
-    color: '#333',
-    lineHeight: 20,
-    fontStyle: 'italic',
     fontWeight: '500',
   },
 
@@ -753,21 +774,35 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
-  madeInIndiaContainer: {
+  brandContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  brandTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    letterSpacing: 0.5,
+  },
+  brandSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  brandFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 4,
   },
-  madeInIndiaText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  madeInIndiaSubtext: {
+  brandFooterText: {
     fontSize: 11,
     color: '#666',
-    textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
 }); 
