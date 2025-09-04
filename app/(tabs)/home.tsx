@@ -366,18 +366,18 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fa',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 10,
+    paddingBottom: 20,
   },
   searchSection: {
     paddingHorizontal: 16,
-    marginTop: 8,
-    marginBottom: 12,
+    marginTop: 16,
+    marginBottom: 24,
   },
   searchBar: {
     flexDirection: 'row',
@@ -402,15 +402,15 @@ const styles = StyleSheet.create({
   },
   restaurantsSection: {
     backgroundColor: 'white',
-    marginBottom: 2,
-    paddingVertical: 12,
+    marginBottom: 24,
+    paddingVertical: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   titleContainer: {
     flex: 1,
@@ -449,15 +449,15 @@ const styles = StyleSheet.create({
   },
   moreExploreSection: {
     backgroundColor: 'white',
-    paddingVertical: 12,
+    paddingVertical: 24,
     paddingHorizontal: 16,
-    marginBottom: 2,
+    marginBottom: 24,
   },
   exploreHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   exploreTitle: {
     fontSize: 18,
@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
   },
   specialOfferSection: {
     paddingHorizontal: 16,
-    marginBottom: 2,
+    marginBottom: 24,
   },
   offerBanner: {
     borderRadius: 16,
@@ -574,15 +574,15 @@ const styles = StyleSheet.create({
 
   featuresSection: {
     backgroundColor: 'white',
-    paddingVertical: 12,
+    paddingVertical: 24,
     paddingHorizontal: 16,
-    marginBottom: 2,
+    marginBottom: 24,
   },
   featuresHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   featuresTitle: {
     fontSize: 18,
@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
 
   testimonialSection: {
     backgroundColor: 'white',
-    paddingVertical: 12,
+    paddingVertical: 24,
     paddingHorizontal: 16,
     marginBottom: 0,
   },
@@ -671,7 +671,7 @@ const styles = StyleSheet.create({
 
   madeInIndiaSection: {
     backgroundColor: 'white',
-    paddingVertical: 16,
+    paddingVertical: 24,
     paddingHorizontal: 16,
     alignItems: 'center',
     borderTopWidth: 1,
