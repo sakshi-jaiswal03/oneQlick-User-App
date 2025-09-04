@@ -326,26 +326,80 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Customer Testimonial */}
+        {/* Customer Testimonials Carousel */}
         <View style={styles.testimonialSection}>
-          <View style={styles.testimonialCard}>
-            <View style={styles.testimonialHeader}>
-              <View style={styles.userAvatar}>
-                <MaterialCommunityIcons name="account" size={20} color="#FF6B35" />
-              </View>
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>Priya S.</Text>
-                <View style={styles.ratingContainer}>
-                  {[1,2,3,4,5].map((star) => (
-                    <MaterialCommunityIcons key={star} name="star" size={12} color="#FFD700" />
-                  ))}
-                </View>
-              </View>
-            </View>
-            <Text style={styles.testimonialText}>
-              "Amazing food quality and super fast delivery! oneQlick has become my go-to app for ordering food. Highly recommended! 🍕"
-            </Text>
+          <View style={styles.testimonialHeader}>
+            <MaterialCommunityIcons name="account-heart" size={20} color="#FF6B35" />
+            <Text style={styles.testimonialSectionTitle}>What our customers say</Text>
           </View>
+          
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.testimonialsContainer}
+            decelerationRate="fast"
+            snapToInterval={280}
+            snapToAlignment="start"
+          >
+            {[
+              {
+                id: 1,
+                name: "Priya S.",
+                avatar: "account",
+                rating: 5,
+                text: "Amazing food quality and super fast delivery! oneQlick has become my go-to app for ordering food. Highly recommended! 🍕",
+                order: "Ordered Pizza"
+              },
+              {
+                id: 2,
+                name: "Rajesh K.",
+                avatar: "account-circle",
+                rating: 5,
+                text: "Love the variety of restaurants available. The app is user-friendly and delivery is always on time. Great service! 🌟",
+                order: "Ordered Biryani"
+              },
+              {
+                id: 3,
+                name: "Anjali M.",
+                avatar: "account-heart",
+                rating: 4,
+                text: "Fresh ingredients, hygienic packaging, and excellent customer support. The offers are amazing too! 😋",
+                order: "Ordered Healthy Meal"
+              },
+              {
+                id: 4,
+                name: "Vikram T.",
+                avatar: "account-star",
+                rating: 5,
+                text: "Best food delivery app I've used! Wide range of cuisines and the quality is consistently good. Keep it up! 👍",
+                order: "Ordered South Indian"
+              }
+            ].map((review, index) => (
+              <View key={review.id} style={[styles.testimonialCard, { marginLeft: index === 0 ? 16 : 8, marginRight: 8 }]}>
+                <View style={styles.testimonialHeader}>
+                  <View style={styles.userAvatar}>
+                    <MaterialCommunityIcons name={review.avatar as any} size={20} color="#FF6B35" />
+                  </View>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userName}>{review.name}</Text>
+                    <View style={styles.ratingContainer}>
+                      {[1,2,3,4,5].map((star) => (
+                        <MaterialCommunityIcons 
+                          key={star} 
+                          name="star" 
+                          size={12} 
+                          color={star <= review.rating ? "#FFD700" : "#E0E0E0"} 
+                        />
+                      ))}
+                    </View>
+                    <Text style={styles.orderInfo}>{review.order}</Text>
+                  </View>
+                </View>
+                <Text style={styles.testimonialText}>{review.text}</Text>
+              </View>
+            ))}
+            <View style={{ width: 16 }} />
+          </ScrollView>
         </View>
 
         {/* Made in India Section */}
@@ -624,8 +678,16 @@ const styles = StyleSheet.create({
   testimonialSection: {
     backgroundColor: 'white',
     paddingVertical: 24,
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     marginBottom: 0,
+  },
+  testimonialSectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  testimonialsContainer: {
+    paddingRight: 16,
   },
   testimonialCard: {
     backgroundColor: '#f8f9fa',
@@ -633,11 +695,19 @@ const styles = StyleSheet.create({
     padding: 16,
     borderLeftWidth: 4,
     borderLeftColor: '#FF6B35',
+    width: 260,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   testimonialHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 8,
+    marginBottom: 20,
+    paddingHorizontal: 16,
   },
   userAvatar: {
     width: 40,
@@ -655,11 +725,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#1a1a1a',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   ratingContainer: {
     flexDirection: 'row',
     gap: 2,
+    marginBottom: 2,
+  },
+  orderInfo: {
+    fontSize: 11,
+    color: '#666',
+    fontWeight: '500',
   },
   testimonialText: {
     fontSize: 13,

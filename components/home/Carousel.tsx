@@ -1,103 +1,153 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions, Pressable } from 'react-native';
-import { Text, Surface } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { CarouselItem } from './carouselData';
 
-const { width } = Dimensions.get('window');
-
-interface CarouselItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  icon: string;
-  backgroundColor: string;
-  actionText: string;
-}
+const { width: screenWidth } = Dimensions.get('window');
+const CARD_WIDTH = screenWidth - 32;
+const CARD_MARGIN = 8;
 
 interface CarouselProps {
   items: CarouselItem[];
   currentIndex: number;
   onItemChange: (index: number) => void;
-  onItemPress?: (item: CarouselItem) => void;
+  onItemPress: (item: CarouselItem) => void;
 }
 
-export default function Carousel({ 
-  items, 
-  currentIndex, 
-  onItemChange,
-  onItemPress 
-}: CarouselProps) {
-  const carouselRef = useRef<ScrollView>(null);
+export default function Carousel({ items, currentIndex, onItemChange, onItemPress }: CarouselProps) {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
 
-  // Auto-scroll carousel when index changes
+  // Auto-swipe functionality
   useEffect(() => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollTo({
-        x: currentIndex * width,
+    if (!autoPlayEnabled || items.length <= 1) return;
+
+    const interval = setInterval(() => {
+      const nextIndex = (currentIndex + 1) % items.length;
+      onItemChange(nextIndex);
+      
+      scrollViewRef.current?.scrollTo({
+        x: nextIndex * (CARD_WIDTH + CARD_MARGIN * 2),
         animated: true,
       });
-    }
-  }, [currentIndex]);
+    }, 4000); // Change slide every 4 seconds
 
-  const renderCarouselItem = (item: CarouselItem, index: number) => (
-    <View key={item.id} style={[styles.carouselItem, { width }]}>
-      <Surface style={[styles.carouselCard, { backgroundColor: item.backgroundColor }]}>
-        <View style={styles.carouselContent}>
-          <View style={styles.topRow}>
-            <View style={styles.iconContainer}>
-              <MaterialIcons name={item.icon as any} size={28} color="white" />
+    return () => clearInterval(interval);
+  }, [currentIndex, autoPlayEnabled, items.length, onItemChange]);
+
+  const handleScroll = (event: any) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / (CARD_WIDTH + CARD_MARGIN * 2));
+    
+    if (index !== currentIndex && index >= 0 && index < items.length) {
+      onItemChange(index);
+    }
+  };
+
+  const handleTouchStart = () => {
+    setAutoPlayEnabled(false);
+  };
+
+  const handleTouchEnd = () => {
+    // Resume auto-play after 5 seconds of inactivity
+    setTimeout(() => setAutoPlayEnabled(true), 5000);
+  };
+
+  const renderCarouselItem = (item: CarouselItem, index: number) => {
+    return (
+      <Pressable
+        key={item.id}
+        style={[styles.carouselCard, { marginLeft: index === 0 ? 16 : CARD_MARGIN, marginRight: CARD_MARGIN }]}
+        onPress={() => onItemPress(item)}
+      >
+        <LinearGradient
+          colors={item.gradientColors}
+          style={styles.cardGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Badge */}
+          {item.badge && (
+            <View style={styles.badge}>
+              <MaterialCommunityIcons name="lightning-bolt" size={12} color="#FF6B35" />
+              <Text style={styles.badgeText}>{item.badge}</Text>
             </View>
-            <Pressable 
-              style={styles.actionButton}
-              onPress={() => onItemPress?.(item)}
-            >
-              <Text style={styles.actionButtonText}>{item.actionText}</Text>
-              <MaterialIcons name="arrow-forward" size={14} color="white" />
-            </Pressable>
+          )}
+
+          {/* Content */}
+          <View style={styles.cardContent}>
+            <View style={styles.cardTextContainer}>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardSubtitle}>{item.subtitle}</Text>
+              <Text style={styles.cardDescription}>{item.description}</Text>
+              
+              {/* Offer Code */}
+              {item.offerCode && (
+                <View style={styles.offerCodeContainer}>
+                  <Text style={styles.offerCodeLabel}>Use code:</Text>
+                  <Text style={styles.offerCode}>{item.offerCode}</Text>
+                </View>
+              )}
+
+              {/* Action Button */}
+              <View style={styles.actionButton}>
+                <Text style={styles.actionButtonText}>{item.actionText}</Text>
+                <MaterialCommunityIcons name="arrow-right" size={14} color="white" />
+              </View>
+            </View>
+
+            {/* Icon Container */}
+            <View style={styles.iconContainer}>
+              {item.discount && (
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountText}>{item.discount}</Text>
+                </View>
+              )}
+              <View style={styles.iconCircle}>
+                <MaterialCommunityIcons 
+                  name={item.icon as any} 
+                  size={28} 
+                  color="white" 
+                />
+              </View>
+            </View>
           </View>
-          
-          <View style={styles.textContainer}>
-            <Text style={styles.carouselTitle}>{item.title}</Text>
-            <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>
-          </View>
-        </View>
-      </Surface>
-    </View>
-  );
+        </LinearGradient>
+      </Pressable>
+    );
+  };
 
   return (
-    <View style={styles.carouselSection}>
+    <View style={styles.container}>
       <ScrollView
-        ref={carouselRef}
+        ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        style={styles.carouselScrollView}
-        onMomentumScrollEnd={(event) => {
-          const newIndex = Math.round(event.nativeEvent.contentOffset.x / width);
-          onItemChange(newIndex);
-        }}
+        onScroll={handleScroll}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        scrollEventThrottle={16}
+        decelerationRate="fast"
+        snapToInterval={CARD_WIDTH + CARD_MARGIN * 2}
+        snapToAlignment="start"
+        contentInsetAdjustmentBehavior="never"
       >
         {items.map(renderCarouselItem)}
+        <View style={{ width: 16 }} />
       </ScrollView>
-      
-      {/* Carousel Indicators */}
-      <View style={styles.carouselIndicators}>
+
+      {/* Pagination Dots */}
+      <View style={styles.pagination}>
         {items.map((_, index) => (
-          <Pressable
+          <View
             key={index}
             style={[
-              styles.carouselIndicator,
-              index === currentIndex && styles.carouselIndicatorActive
+              styles.paginationDot,
+              index === currentIndex && styles.paginationDotActive,
             ]}
-            onPress={() => {
-              if (carouselRef.current) {
-                carouselRef.current.scrollTo({
-                  x: index * width,
-                  animated: true,
-                });
-              }
-            }}
           />
         ))}
       </View>
@@ -106,92 +156,146 @@ export default function Carousel({
 }
 
 const styles = StyleSheet.create({
-  carouselSection: {
-    marginTop: 20,
+  container: {
     marginBottom: 24,
   },
-  carouselScrollView: {
-    height: 140,
-  },
-  carouselItem: {
-    paddingHorizontal: 16,
-  },
   carouselCard: {
-    height: 140,
+    width: CARD_WIDTH,
+    height: 180,
     borderRadius: 16,
-    padding: 20,
+    overflow: 'hidden',
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
   },
-  carouselContent: {
+  cardGradient: {
     flex: 1,
-    justifyContent: 'space-between',
+    padding: 16,
+    position: 'relative',
   },
-  topRow: {
+  badge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FF6B35',
+  },
+  cardContent: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    paddingTop: 32,
   },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  textContainer: {
+  cardTextContainer: {
     flex: 1,
+    paddingRight: 12,
   },
-  carouselTitle: {
+  cardTitle: {
     fontSize: 18,
+    fontWeight: '800',
+    color: 'white',
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 4,
+  },
+  cardDescription: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.8)',
+    marginBottom: 8,
+    lineHeight: 14,
+  },
+  offerCodeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 4,
+  },
+  offerCodeLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+  },
+  offerCode: {
+    fontSize: 11,
     fontWeight: '700',
     color: 'white',
-    marginBottom: 6,
-  },
-  carouselSubtitle: {
-    fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-    lineHeight: 18,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    alignSelf: 'flex-start',
+    gap: 3,
   },
   actionButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
-    marginRight: 4,
   },
-  carouselIndicators: {
+  iconContainer: {
+    alignItems: 'center',
+    opacity: 0.3,
+  },
+  discountBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  discountText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'white',
+    textAlign: 'center',
+  },
+  iconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pagination: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 16,
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingTop: 16,
+    gap: 6,
   },
-  carouselIndicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-    marginHorizontal: 4,
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E0E0E0',
   },
-  carouselIndicatorActive: {
+  paginationDotActive: {
     backgroundColor: '#FF6B35',
-    width: 16,
-    height: 6,
-    borderRadius: 3,
+    width: 20,
   },
 }); 
