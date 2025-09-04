@@ -37,13 +37,13 @@ export default function NearbyRestaurants({ restaurants }: NearbyRestaurantsProp
   );
 
   return (
-    <ScrollView 
-      horizontal 
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.scrollContent}
-    >
-      {restaurants.map(renderRestaurant)}
-    </ScrollView>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {restaurants.map(renderRestaurant)}
+      </ScrollView>
   );
 }
 

@@ -19,8 +19,8 @@ type ViewMode = 'grid' | 'list';
 export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProps) {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-
-  return (
+    
+    return (
     <View style={styles.section}>
       {/* Enhanced Section Header */}
       <View style={styles.sectionHeader}>
@@ -33,7 +33,7 @@ export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProp
           <View style={styles.statsContainer}>
             <MaterialCommunityIcons name="chart-line" size={14} color="#4CAF50" />
             <Text style={styles.statsText}>{dishes.length} trending dishes</Text>
-          </View>
+            </View>
         </View>
         
         <View style={styles.headerActions}>
@@ -100,7 +100,7 @@ export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProp
             />
             <Text style={[styles.filterText, filter.active && styles.filterTextActive]}>
               {filter.label}
-            </Text>
+          </Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -150,7 +150,7 @@ export default function PopularDishes({ dishes, onAddToCart }: PopularDishesProp
         <View style={styles.metricItem}>
           <MaterialCommunityIcons name="shield-check" size={16} color="#2196F3" />
           <Text style={styles.metricText}>Quality assured</Text>
-        </View>
+      </View>
       </View>
     </View>
   );

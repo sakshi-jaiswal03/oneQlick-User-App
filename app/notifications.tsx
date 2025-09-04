@@ -266,36 +266,36 @@ export default function NotificationsScreen() {
         ]}>
           <MaterialCommunityIcons
             name={getNotificationIcon(notification.type) as any}
-            size={24}
-            color={getNotificationColor(notification.type)}
-          />
-        </View>
-        
+              size={24}
+              color={getNotificationColor(notification.type)}
+            />
+          </View>
+          
         {/* Content */}
         <View style={styles.contentContainer}>
           {/* Header Row */}
           <View style={styles.headerRow}>
-            <Text style={styles.notificationTitle} numberOfLines={1}>
-              {notification.title}
-            </Text>
+              <Text style={styles.notificationTitle} numberOfLines={1}>
+                {notification.title}
+              </Text>
             {!notification.isRead && <View style={styles.unreadDot} />}
           </View>
           
           {/* Type Badge */}
           <View style={[
             styles.typeBadge,
-            { backgroundColor: getNotificationColor(notification.type) }
+                  { backgroundColor: getNotificationColor(notification.type) }
           ]}>
             <Text style={styles.typeText}>
-              {getNotificationTypeText(notification.type)}
+                {getNotificationTypeText(notification.type)}
             </Text>
-          </View>
-          
+            </View>
+            
           {/* Message */}
-          <Text style={styles.notificationMessage} numberOfLines={2}>
-            {notification.message}
-          </Text>
-          
+            <Text style={styles.notificationMessage} numberOfLines={2}>
+              {notification.message}
+            </Text>
+            
           {/* Bottom Row */}
           <View style={styles.bottomRow}>
             <Text style={styles.timestamp}>
@@ -322,12 +322,12 @@ export default function NotificationsScreen() {
         <View style={styles.headerLeft}>
           <Pressable 
             style={styles.backButton}
-            onPress={() => router.back()}
+          onPress={() => router.back()}
           >
             <MaterialCommunityIcons name="arrow-left" size={24} color="#1a1a1a" />
           </Pressable>
           <View>
-            <Text style={styles.headerTitle}>Notifications</Text>
+        <Text style={styles.headerTitle}>Notifications</Text>
             {unreadCount > 0 && (
               <Text style={styles.unreadCountText}>
                 {unreadCount} unread message{unreadCount > 1 ? 's' : ''}
@@ -345,7 +345,7 @@ export default function NotificationsScreen() {
           )}
         </View>
       </View>
-
+      
       {/* Filters */}
       <View style={styles.filtersContainer}>
         <ScrollView 

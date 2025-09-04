@@ -25,14 +25,14 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
 
   const renderCategory = (category: FoodCategory, index: number) => {
     return (
-      <Pressable
-        key={category.id}
+    <Pressable
+      key={category.id}
         style={[
           styles.categoryItem,
           { marginLeft: index === 0 ? 16 : 0 }
         ]}
-        onPress={() => handleCategoryPress(category.name)}
-      >
+      onPress={() => handleCategoryPress(category.name)}
+    >
         <View style={styles.categoryCard}>
           {/* Icon */}
           <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
@@ -48,8 +48,8 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
             {category.name}
           </Text>
         </View>
-      </Pressable>
-    );
+    </Pressable>
+  );
   };
 
   return (

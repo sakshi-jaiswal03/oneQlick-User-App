@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, Image, Pressable } from 'react-native';
-import { Text, Surface, IconButton } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, StyleSheet, Image, Pressable, Text } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 interface CartItemProps {
   item: any;
@@ -14,28 +13,44 @@ export default function CartItem({ item, onQuantityChange, onRemove }: CartItemP
     return null;
   }
 
+  const totalPrice = (item.foodItem.price || 0) * (item.quantity || 1);
+  const addOnsTotal = (item.addOns || []).reduce((sum: number, addOn: any) => sum + (addOn?.price || 0), 0);
+  const itemTotal = totalPrice + addOnsTotal;
+
   return (
-    <Surface style={styles.cartItem}>
-      {/* Left side - Food Image */}
+    <View style={styles.cartItem}>
+      {/* Food Image */}
       <View style={styles.imageContainer}>
         <Image 
           source={{ uri: item.foodItem.image }} 
           style={styles.foodImage}
           defaultSource={require('../../assets/icon.png')}
-          onError={(error) => console.log('Image loading error:', error)}
         />
-        {item.foodItem.isVeg && (
-          <View style={styles.vegIndicator}>
-            <MaterialIcons name="circle" size={10} color="#4CAF50" />
-          </View>
-        )}
+        
+        {/* Veg/Non-veg Indicator */}
+        <View style={[
+          styles.vegIndicator,
+          { backgroundColor: item.foodItem.isVeg ? '#4CAF50' : '#F44336' }
+        ]}>
+          <MaterialCommunityIcons 
+            name={item.foodItem.isVeg ? 'circle' : 'triangle'} 
+            size={8} 
+            color="#fff" 
+          />
+        </View>
       </View>
 
-      {/* Center - Food Details */}
+      {/* Food Details */}
       <View style={styles.foodDetails}>
-        <Text style={styles.foodName} numberOfLines={2}>
-          {item.foodItem.name || 'Food Item'}
-        </Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.foodName} numberOfLines={2}>
+            {item.foodItem.name || 'Food Item'}
+          </Text>
+          
+          <Pressable style={styles.removeButton} onPress={() => onRemove(item.id)}>
+            <MaterialCommunityIcons name="close" size={16} color="#F44336" />
+          </Pressable>
+        </View>
         
         {item.foodItem.description && (
           <Text style={styles.foodDescription} numberOfLines={1}>
@@ -48,69 +63,63 @@ export default function CartItem({ item, onQuantityChange, onRemove }: CartItemP
           <View style={styles.addOnsContainer}>
             <Text style={styles.addOnsLabel}>Add-ons:</Text>
             {item.addOns.map((addOn: any, index: number) => (
-              <Text key={index} style={styles.addOnText}>
-                • {addOn.name} (+₹{addOn.price})
-              </Text>
+              <View key={index} style={styles.addOnItem}>
+                <MaterialCommunityIcons name="plus-circle" size={12} color="#FF6B35" />
+                <Text style={styles.addOnText}>
+                  {addOn.name} (+₹{addOn.price})
+                </Text>
+              </View>
             ))}
           </View>
         )}
 
-        {/* Price */}
-        <View style={styles.priceContainer}>
-          <Text style={styles.foodPrice}>₹{item.foodItem.price || 0}</Text>
-          {item.foodItem.originalPrice && (
-            <Text style={styles.originalPrice}>₹{item.foodItem.originalPrice}</Text>
-          )}
+        {/* Price and Quantity Row */}
+        <View style={styles.bottomRow}>
+          <View style={styles.priceContainer}>
+            <Text style={styles.foodPrice}>₹{item.foodItem.price || 0}</Text>
+            {item.foodItem.originalPrice && item.foodItem.originalPrice > item.foodItem.price && (
+              <Text style={styles.originalPrice}>₹{item.foodItem.originalPrice}</Text>
+            )}
+          </View>
+
+          {/* Quantity Controls */}
+          <View style={styles.quantityContainer}>
+            <Pressable
+              style={styles.quantityButton}
+              onPress={() => onQuantityChange(item.id, false)}
+            >
+              <MaterialCommunityIcons name="minus" size={16} color="#FF6B35" />
+            </Pressable>
+            
+            <Text style={styles.quantityText}>
+              {item.quantity || 1}
+            </Text>
+            
+            <Pressable
+              style={styles.quantityButton}
+              onPress={() => onQuantityChange(item.id, true)}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color="#FF6B35" />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Item Total */}
+        <View style={styles.itemTotalContainer}>
+          <Text style={styles.itemTotalLabel}>Item Total:</Text>
+          <Text style={styles.itemTotalPrice}>₹{itemTotal.toFixed(2)}</Text>
         </View>
       </View>
-
-      {/* Right side - Quantity and Remove */}
-      <View style={styles.rightSection}>
-        {/* Quantity Controls */}
-        <View style={styles.quantityContainer}>
-          <Pressable
-            style={styles.quantityButton}
-            onPress={() => onQuantityChange(item.id, false)}
-          >
-            <MaterialIcons name="remove" size={18} color="#FF6B35" />
-          </Pressable>
-          
-          <Text style={styles.quantityText}>
-            {item.quantity || 1}
-          </Text>
-          
-          <Pressable
-            style={styles.quantityButton}
-            onPress={() => onQuantityChange(item.id, true)}
-          >
-            <MaterialIcons name="add" size={18} color="#FF6B35" />
-          </Pressable>
-        </View>
-
-        {/* Remove Button */}
-        <IconButton
-          icon="delete-outline"
-          size={20}
-          iconColor="#F44336"
-          onPress={() => onRemove(item.id)}
-          style={styles.removeButton}
-        />
-      </View>
-    </Surface>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   cartItem: {
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
     borderWidth: 1,
     borderColor: '#f0f0f0',
     flexDirection: 'row',
@@ -127,81 +136,99 @@ const styles = StyleSheet.create({
   },
   vegIndicator: {
     position: 'absolute',
-    top: -4,
-    left: -4,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    padding: 2,
-    elevation: 1,
+    top: -6,
+    left: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   foodDetails: {
     flex: 1,
+  },
+  headerRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
-    minHeight: 80,
+    alignItems: 'flex-start',
+    marginBottom: 6,
   },
   foodName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2c3e50',
-    marginBottom: 4,
+    color: '#1a1a1a',
+    flex: 1,
     lineHeight: 20,
+    marginRight: 8,
+  },
+  removeButton: {
+    backgroundColor: '#FFF5F5',
+    padding: 6,
+    borderRadius: 12,
   },
   foodDescription: {
-    fontSize: 13,
-    color: '#6c757d',
+    fontSize: 12,
+    color: '#666',
     marginBottom: 8,
     lineHeight: 16,
   },
-  addOnsContainer: { 
-    marginBottom: 8,
-    backgroundColor: '#f8f9fa',
-    padding: 8,
-    borderRadius: 6,
+  addOnsContainer: {
+    backgroundColor: '#F8F9FA',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
   },
-  addOnsLabel: { 
-    fontSize: 11, 
-    color: '#495057', 
-    fontWeight: '600', 
-    marginBottom: 4,
+  addOnsLabel: {
+    fontSize: 11,
+    color: '#666',
+    fontWeight: '600',
+    marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  addOnText: { 
-    fontSize: 11, 
-    color: '#6c757d', 
-    marginLeft: 6,
-    lineHeight: 14,
+  addOnItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
   },
-  priceContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 6 
+  addOnText: {
+    fontSize: 12,
+    color: '#666',
+    lineHeight: 16,
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   foodPrice: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#FF6B35',
   },
-  originalPrice: { 
-    fontSize: 12, 
-    color: '#adb5bd', 
+  originalPrice: {
+    fontSize: 12,
+    color: '#999',
     textDecorationLine: 'line-through',
     fontWeight: '500',
   },
-  rightSection: {
+  quantityContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 80,
-  },
-  quantityContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: 20, 
+    backgroundColor: '#F8F9FA',
+    borderRadius: 20,
     paddingHorizontal: 4,
     borderWidth: 1,
-    borderColor: '#e9ecef',
-    marginBottom: 8,
+    borderColor: '#E9ECEF',
   },
   quantityButton: {
     width: 28,
@@ -209,20 +236,32 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white',
-    elevation: 1,
+    backgroundColor: '#fff',
   },
   quantityText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2c3e50',
+    color: '#1a1a1a',
     marginHorizontal: 12,
     minWidth: 20,
     textAlign: 'center',
   },
-  removeButton: {
-    backgroundColor: '#fff5f5',
-    borderRadius: 16,
-    elevation: 1,
+  itemTotalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  itemTotalLabel: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  itemTotalPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
   },
 });

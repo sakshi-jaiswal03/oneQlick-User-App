@@ -1,94 +1,54 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
-  Animated,
   Pressable,
   Alert,
   BackHandler,
-} from 'react-native';
-import {
   Text,
-  Surface,
-  Button,
-  TextInput,
-  IconButton,
-  Divider,
-} from 'react-native-paper';
+  Modal,
+} from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCart } from '../../../hooks/useCart';
 import { cartData, availableCoupons } from './cartData';
-import { CartItem } from '../../../components/cart';
-import AddressSelector from './AddressSelector';
 
 export default function CartScreen() {
   const router = useRouter();
   const { cart, removeFromCart, updateQuantity, clearCart } = useCart();
   
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponError, setCouponError] = useState('');
-  const [couponSuccess, setCouponSuccess] = useState('');
-  const [selectedAddress, setSelectedAddress] = useState(cartData.deliveryAddress);
-  const [isBillExpanded, setIsBillExpanded] = useState(false);
+  const [showCouponModal, setShowCouponModal] = useState(false);
   
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-
-  // Use only the actual cart from the hook, no default sample data
   const displayCart = cart;
+  const deliveryTime = '25-30 mins';
+  const deliveryAddress = 'Home - Konkan, Mumbai';
+  const contactName = 'Taha';
+  const contactPhone = '+91 98765 43210';
 
-  // Handle phone back button press
+  // Handle back button
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        // Navigate to home screen when phone back button is pressed
+        if (showCouponModal) {
+          setShowCouponModal(false);
+          return true;
+        }
         router.push('/(tabs)/home');
-        return true; // Prevent default back behavior
+        return true;
       };
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
-
       return () => subscription.remove();
-    }, [router])
+    }, [router, showCouponModal])
   );
 
-  // Debug logging
-  useEffect(() => {
-    console.log('Cart screen mounted');
-    console.log('Hook cart items:', cart.items.length);
-    console.log('Display cart items:', displayCart.items.length);
-    console.log('Cart items data:', displayCart.items);
-    console.log('Cart total items count:', cart.items.reduce((total, item) => total + (item.quantity || 1), 0));
-  }, [cart.items.length, displayCart.items.length, cart.items]);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const handleBackPress = () => {
-    console.log('Back button pressed, navigating to home...');
-    // Navigate to home screen instead of just going back
-    router.push('/(tabs)/home');
-  };
-
-  // Calculate bill breakdown
+  // Calculate bill
   const calculateBill = () => {
     if (displayCart.items.length === 0) {
-      return {
-        subtotal: 0,
-        gst: 0,
-        deliveryFee: 0,
-        packagingCharges: 0,
-        discount: 0,
-        total: 0,
-      };
+      return { subtotal: 0, gst: 0, deliveryFee: 0, platformFee: 0, discount: 0, total: 0 };
     }
 
     const subtotal = displayCart.items.reduce((total, item) => {
@@ -97,98 +57,46 @@ export default function CartScreen() {
       return total + itemTotal + addOnsTotal;
     }, 0);
 
-    const gst = subtotal * 0.05; // 5% GST
-    const deliveryFee = cartData.deliveryFee;
-    const packagingCharges = cartData.packagingCharges;
+    const deliveryFee = subtotal >= 199 ? 0 : 49;
+    const platformFee = 5;
+    const gst = subtotal * 0.05;
     
     let discount = 0;
     if (appliedCoupon) {
       if (appliedCoupon.type === 'percentage') {
-        discount = Math.min(subtotal * (appliedCoupon.discount / 100), appliedCoupon.maxDiscount);
+        discount = Math.min(subtotal * (appliedCoupon.discount / 100), appliedCoupon.maxDiscount || subtotal);
       } else {
         discount = appliedCoupon.discount;
       }
     }
 
-    const total = subtotal + gst + deliveryFee + packagingCharges - discount;
+    const total = subtotal + gst + deliveryFee + platformFee - discount;
 
-    return {
-      subtotal,
-      gst,
-      deliveryFee,
-      packagingCharges,
-      discount,
-      total,
-    };
+    return { subtotal, gst, deliveryFee, platformFee, discount, total };
   };
 
   const bill = calculateBill();
 
   const handleQuantityChange = (itemId: string, increment: boolean) => {
-    console.log('Quantity change requested:', itemId, increment);
     const item = displayCart.items.find(item => item.id === itemId);
-    if (!item) {
-      console.log('Item not found:', itemId);
-      return;
-    }
+    if (!item) return;
 
     const newQuantity = increment ? (item.quantity || 1) + 1 : Math.max(1, (item.quantity || 1) - 1);
-    console.log('New quantity:', newQuantity);
     
     if (newQuantity === 0) {
-      handleRemoveItem(itemId);
+      removeFromCart(itemId);
     } else {
-      // Call the actual updateQuantity function from the hook
       updateQuantity(itemId, newQuantity);
     }
   };
 
-  const handleRemoveItem = (itemId: string) => {
-    Alert.alert(
-      'Remove Item',
-      'Are you sure you want to remove this item from your cart?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => {
-          // Call the actual removeFromCart function from the hook
-          removeFromCart(itemId);
-        }}
-      ]
-    );
-  };
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
-      return;
-    }
-
-    setCouponError('');
-    setCouponSuccess('');
-
-    const coupon = availableCoupons.find(c => c.code.toUpperCase() === couponCode.toUpperCase());
-    
-    if (!coupon) {
-      setCouponError('Invalid coupon code');
-      return;
-    }
-
+  const handleApplyCoupon = (coupon: any) => {
     if (bill.subtotal < coupon.minOrder) {
-      setCouponError(`Minimum order amount is ₹${coupon.minOrder}`);
+      Alert.alert('Invalid Coupon', `Minimum order amount is ₹${coupon.minOrder}`);
       return;
     }
-
     setAppliedCoupon(coupon);
-    setCouponSuccess(`Coupon applied! ${coupon.description}`);
-    setCouponCode('');
-    
-    // Auto-hide success message
-    setTimeout(() => setCouponSuccess(''), 3000);
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponSuccess('');
+    setShowCouponModal(false);
   };
 
   const handleProceedToCheckout = () => {
@@ -196,234 +104,221 @@ export default function CartScreen() {
       Alert.alert('Empty Cart', 'Please add items to your cart before checkout.');
       return;
     }
-    
     router.push('/checkout');
   };
 
-  const handleContinueShopping = () => {
-    router.push('/(tabs)/home');
-  };
+  // Coupon Modal
+  const renderCouponModal = () => (
+    <Modal
+      visible={showCouponModal}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={() => setShowCouponModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.couponModal}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Available Coupons</Text>
+            <Pressable onPress={() => setShowCouponModal(false)}>
+              <MaterialCommunityIcons name="close" size={24} color="#666" />
+            </Pressable>
+          </View>
 
-  const renderBillBreakdown = () => (
-    <Surface style={styles.billContainer}>
-      <Pressable
-        style={styles.billHeader}
-        onPress={() => setIsBillExpanded(!isBillExpanded)}
-      >
-        <Text style={styles.billTitle}>Bill Details</Text>
-        <MaterialIcons
-          name={isBillExpanded ? "expand-less" : "expand-more"}
-          size={24}
-          color="#666"
-        />
-      </Pressable>
-
-      {isBillExpanded && (
-        <View style={styles.billDetails}>
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Subtotal</Text>
-            <Text style={styles.billValue}>₹{bill.subtotal.toFixed(2)}</Text>
-          </View>
-          
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>GST (5%)</Text>
-            <Text style={styles.billValue}>₹{bill.gst.toFixed(2)}</Text>
-          </View>
-          
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Delivery Fee</Text>
-            <Text style={styles.billValue}>₹{bill.deliveryFee}</Text>
-          </View>
-          
-          <View style={styles.billRow}>
-            <Text style={styles.billLabel}>Packaging Charges</Text>
-            <Text style={styles.billValue}>₹{bill.packagingCharges}</Text>
-          </View>
-          
-          {appliedCoupon && (
-            <View style={styles.billRow}>
-              <Text style={styles.billLabel}>Discount ({appliedCoupon.code})</Text>
-              <Text style={[styles.billValue, styles.discountText]}>
-                -₹{bill.discount.toFixed(2)}
-              </Text>
-            </View>
-          )}
-          
-          <Divider style={styles.billDivider} />
-          
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>₹{bill.total.toFixed(2)}</Text>
-          </View>
+          <ScrollView style={styles.modalContent}>
+            {availableCoupons.map((coupon, index) => {
+              const isEligible = bill.subtotal >= coupon.minOrder;
+              const isApplied = appliedCoupon?.code === coupon.code;
+              
+              return (
+                <View key={index} style={[styles.couponItem, !isEligible && styles.disabledCoupon]}>
+                  <View style={styles.couponLeft}>
+                    <Text style={styles.couponCode}>{coupon.code}</Text>
+                    <Text style={styles.couponTitle}>{coupon.title}</Text>
+                    <Text style={styles.couponDesc}>{coupon.description}</Text>
+                    {!isEligible && (
+                      <Text style={styles.minOrderText}>Min order ₹{coupon.minOrder}</Text>
+                    )}
+                  </View>
+                  <View style={styles.couponRight}>
+                    {isApplied ? (
+                      <Text style={styles.appliedText}>Applied</Text>
+                    ) : isEligible ? (
+                      <Pressable style={styles.applyBtn} onPress={() => handleApplyCoupon(coupon)}>
+                        <Text style={styles.applyText}>Apply</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
         </View>
-      )}
-    </Surface>
-  );
-
-  const renderCouponSection = () => (
-    <Surface style={styles.couponContainer}>
-      <Text style={styles.couponHeader}>Apply Coupon</Text>
-      
-      {appliedCoupon ? (
-        <View style={styles.appliedCouponContainer}>
-          <View style={styles.appliedCouponInfo}>
-            <Text style={styles.appliedCouponCode}>{appliedCoupon.code}</Text>
-            <Text style={styles.appliedCouponDescription}>{appliedCoupon.description}</Text>
-          </View>
-          <IconButton
-            icon="close"
-            size={20}
-            iconColor="#F44336"
-            onPress={handleRemoveCoupon}
-          />
-        </View>
-      ) : (
-        <View style={styles.couponInputContainer}>
-          <TextInput
-            mode="outlined"
-            placeholder="Enter coupon code"
-            value={couponCode}
-            onChangeText={setCouponCode}
-            style={styles.couponInput}
-          />
-          
-          <Button
-            mode="contained"
-            onPress={handleApplyCoupon}
-            disabled={!couponCode.trim()}
-            style={styles.applyButton}
-          >
-            Apply
-          </Button>
-        </View>
-      )}
-      
-      {couponError && (
-        <Text style={styles.couponError}>{couponError}</Text>
-      )}
-      
-      {couponSuccess && (
-        <Text style={styles.couponSuccess}>{couponSuccess}</Text>
-      )}
-    </Surface>
-  );
-
-  const renderDeliveryInfo = () => (
-    <AddressSelector
-      selectedAddress={selectedAddress}
-      onAddressChange={setSelectedAddress}
-    />
-  );
-
-  const renderEmptyCart = () => (
-    <View style={styles.emptyCartContainer}>
-      <View style={styles.emptyCartIcon}>
-        <MaterialIcons name="shopping-cart" size={80} color="#ccc" />
       </View>
-      
-      <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
-      <Text style={styles.emptyCartSubtitle}>
-        Looks like you haven't added any items to your cart yet
-      </Text>
-      
-      <Button
-        mode="contained"
-        onPress={handleContinueShopping}
-        style={styles.continueShoppingButton}
-        contentStyle={styles.continueShoppingButtonContent}
-      >
-        Continue Shopping
-      </Button>
-    </View>
+    </Modal>
   );
 
-  console.log('About to render cart screen with items:', displayCart.items.length);
+  // Empty cart
+  if (displayCart.items.length === 0) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.emptyCart}>
+          <MaterialCommunityIcons name="cart-outline" size={60} color="#ccc" />
+          <Text style={styles.emptyTitle}>Your cart is empty</Text>
+          <Pressable style={styles.shopBtn} onPress={() => router.push('/(tabs)/home')}>
+            <Text style={styles.shopBtnText}>Start Shopping</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  // Always show empty cart initially - no default items
   return (
     <SafeAreaView style={styles.container}>
-      {/* Custom Header */}
-      <View style={styles.customHeader}>
-        <Pressable onPress={handleBackPress} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#333" />
+      {/* 1. Top Navigation with Delivery Time + Address */}
+      <View style={styles.topNav}>
+        <Pressable onPress={() => router.push('/(tabs)/home')}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
         </Pressable>
-        <Text style={styles.headerTitle}>Cart</Text>
-        {displayCart.items.length > 0 && (
-          <Pressable 
-            onPress={() => {
-              Alert.alert(
-                'Clear Cart',
-                'Are you sure you want to clear your entire cart?',
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Clear', style: 'destructive', onPress: () => {
-                    clearCart();
-                  }}
-                ]
-              );
-            }}
-            style={styles.clearCartButton}
-          >
-            <MaterialIcons name="delete-sweep" size={24} color="#F44336" />
-          </Pressable>
-        )}
-        {displayCart.items.length === 0 && <View style={styles.headerRight} />}
+        <View style={styles.navCenter}>
+          <Text style={styles.deliveryTime}>{deliveryTime}</Text>
+          <Text style={styles.address}>{deliveryAddress}</Text>
+        </View>
+        <View style={styles.navRight} />
       </View>
 
-      {displayCart.items.length === 0 ? (
-        // Show empty cart
-        renderEmptyCart()
-      ) : (
-        // Show cart with items
-        <>
-          <ScrollView 
-            style={styles.scrollView}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {/* Cart Items */}
-            <View style={styles.cartItemsContainer}>
-              {displayCart.items.map((item) => (
-                <CartItem
-                  key={item.id}
-                  item={item}
-                  onQuantityChange={handleQuantityChange}
-                  onRemove={handleRemoveItem}
-                />
-              ))}
-            </View>
-
-            {/* Coupon Section */}
-            {renderCouponSection()}
-
-            {/* Delivery Info */}
-            {renderDeliveryInfo()}
-
-            {/* Bill Breakdown */}
-            {renderBillBreakdown()}
-
-            {/* Bottom spacing */}
-            <View style={{ height: 120 }} />
-          </ScrollView>
-
-          {/* Checkout Button */}
-          <Surface style={styles.checkoutBar}>
-            <View style={styles.checkoutInfo}>
-              <Text style={styles.checkoutTotalLabel}>Total Amount</Text>
-              <Text style={styles.checkoutTotalPrice}>₹{bill.total.toFixed(2)}</Text>
-            </View>
+      <ScrollView style={styles.content}>
+        {/* 1. Items - Just dish names with veg/non-veg icons */}
+        <View style={styles.section}>
+          {displayCart.items.map((item) => {
+            const foodItem = item.foodItem || {};
+            const quantity = item.quantity || 1;
             
-            <Button
-              mode="contained"
-              onPress={handleProceedToCheckout}
-              style={styles.checkoutButton}
-              contentStyle={styles.checkoutButtonContent}
-            >
-              Proceed to Checkout
-            </Button>
-          </Surface>
-        </>
-      )}
+            return (
+              <View key={item.id} style={styles.dishItem}>
+                <View style={styles.dishLeft}>
+                  <View style={[styles.vegIcon, { backgroundColor: foodItem.isVeg ? '#0f8644' : '#e43b4f' }]}>
+                    <MaterialCommunityIcons 
+                      name={foodItem.isVeg ? 'circle' : 'triangle'} 
+                      size={8} 
+                      color="#fff" 
+                    />
+                  </View>
+                  <Text style={styles.dishName}>{foodItem.name}</Text>
+                </View>
+                <View style={styles.dishRight}>
+                  <View style={styles.qtyControls}>
+                    <Pressable 
+                      style={styles.qtyBtn}
+                      onPress={() => handleQuantityChange(item.id, false)}
+                    >
+                      <MaterialCommunityIcons name="minus" size={16} color="#FF6B35" />
+                    </Pressable>
+                    <Text style={styles.qtyText}>{quantity}</Text>
+                    <Pressable 
+                      style={styles.qtyBtn}
+                      onPress={() => handleQuantityChange(item.id, true)}
+                    >
+                      <MaterialCommunityIcons name="plus" size={16} color="#FF6B35" />
+                    </Pressable>
+                  </View>
+                  <Text style={styles.dishPrice}>₹{((foodItem.price || 0) * quantity).toFixed(0)}</Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* 2. Available Coupons */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Coupons</Text>
+          {appliedCoupon ? (
+            <View style={styles.appliedCouponBox}>
+              <MaterialCommunityIcons name="check-circle" size={20} color="#4CAF50" />
+              <Text style={styles.appliedCouponText}>{appliedCoupon.code} applied • Saved ₹{bill.discount}</Text>
+              <Pressable onPress={() => setAppliedCoupon(null)}>
+                <MaterialCommunityIcons name="close" size={20} color="#666" />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable style={styles.couponBox} onPress={() => setShowCouponModal(true)}>
+              <MaterialCommunityIcons name="tag" size={20} color="#FF6B35" />
+              <Text style={styles.couponText}>Apply Coupon</Text>
+              <MaterialCommunityIcons name="chevron-right" size={20} color="#666" />
+            </Pressable>
+          )}
+        </View>
+
+        {/* 3. Time taking for delivery */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Delivery Time</Text>
+          <View style={styles.deliveryBox}>
+            <MaterialCommunityIcons name="clock-outline" size={20} color="#666" />
+            <Text style={styles.deliveryText}>Your order will be delivered in {deliveryTime}</Text>
+          </View>
+        </View>
+
+        {/* 4. Name and phone number for delivery contact */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Delivery Contact</Text>
+          <View style={styles.contactBox}>
+            <MaterialCommunityIcons name="account" size={20} color="#666" />
+            <View style={styles.contactInfo}>
+              <Text style={styles.contactName}>{contactName}</Text>
+              <Text style={styles.contactPhone}>{contactPhone}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 5. Bill and all other */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Bill Summary</Text>
+          <View style={styles.billBox}>
+            <View style={styles.billRow}>
+              <Text style={styles.billLabel}>Item Total</Text>
+              <Text style={styles.billValue}>₹{bill.subtotal.toFixed(0)}</Text>
+            </View>
+            <View style={styles.billRow}>
+              <Text style={styles.billLabel}>Delivery Fee</Text>
+              <Text style={[styles.billValue, bill.deliveryFee === 0 && styles.freeText]}>
+                {bill.deliveryFee === 0 ? 'FREE' : `₹${bill.deliveryFee}`}
+              </Text>
+            </View>
+            <View style={styles.billRow}>
+              <Text style={styles.billLabel}>Platform Fee</Text>
+              <Text style={styles.billValue}>₹{bill.platformFee}</Text>
+            </View>
+            <View style={styles.billRow}>
+              <Text style={styles.billLabel}>GST</Text>
+              <Text style={styles.billValue}>₹{bill.gst.toFixed(0)}</Text>
+            </View>
+            {appliedCoupon && (
+              <View style={styles.billRow}>
+                <Text style={styles.billLabel}>Discount</Text>
+                <Text style={[styles.billValue, styles.discountText]}>-₹{bill.discount.toFixed(0)}</Text>
+              </View>
+            )}
+            <View style={styles.billDivider} />
+            <View style={styles.billRow}>
+              <Text style={styles.billTotal}>Total</Text>
+              <Text style={styles.billTotalValue}>₹{bill.total.toFixed(0)}</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* 6. Bottom section with policy and payment (no bottom nav) */}
+      <View style={styles.bottomSection}>
+        <Text style={styles.policyText}>
+          By placing this order, you agree to our Terms of Service and Privacy Policy
+        </Text>
+        <Pressable style={styles.payBtn} onPress={handleProceedToCheckout}>
+          <Text style={styles.payBtnText}>Pay ₹{bill.total.toFixed(0)} & Place Order</Text>
+        </Pressable>
+      </View>
+
+      {renderCouponModal()}
     </SafeAreaView>
   );
 }
@@ -431,270 +326,354 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f5f5',
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 120, // Space for checkout bar
-  },
-  customHeader: {
+  
+  // Top Navigation
+  topNav: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    borderBottomColor: '#e0e0e0',
   },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+  navCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
-  headerTitle: {
-    fontSize: 20,
+  deliveryTime: {
+    fontSize: 16,
     fontWeight: '700',
-    color: '#2c3e50',
+    color: '#000',
   },
-  headerRight: {
-    width: 48,
+  address: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
-  clearCartButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff5f5',
+  navRight: {
+    width: 24,
   },
-  cartItemsContainer: {
-    padding: 20,
+  
+  // Content
+  content: {
+    flex: 1,
   },
-  emptyCartContainer: {
+  section: {
+    backgroundColor: '#fff',
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 12,
+  },
+  
+  // Dish Items
+  dishItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dishLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 8,
+  },
+  vegIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dishName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+    flex: 1,
+  },
+  dishRight: {
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  qtyControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  qtyBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#FF6B35',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    minWidth: 16,
+    textAlign: 'center',
+  },
+  dishPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
+  
+  // Coupons
+  couponBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff8f5',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffe0d6',
+    gap: 8,
+  },
+  couponText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#FF6B35',
+    flex: 1,
+  },
+  appliedCouponBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f9f0',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    gap: 8,
+  },
+  appliedCouponText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4CAF50',
+    flex: 1,
+  },
+  
+  // Delivery Time
+  deliveryBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deliveryText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  
+  // Contact
+  contactBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+  },
+  contactPhone: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  
+  // Bill
+  billBox: {
+    gap: 8,
+  },
+  billRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  billLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  billValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+  },
+  freeText: {
+    color: '#4CAF50',
+  },
+  discountText: {
+    color: '#4CAF50',
+  },
+  billDivider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 8,
+  },
+  billTotal: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+  },
+  billTotalValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000',
+  },
+  
+  // Bottom Section
+  bottomSection: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
+  policyText: {
+    fontSize: 11,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+  payBtn: {
+    backgroundColor: '#FF6B35',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  payBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  
+  // Empty Cart
+  emptyCart: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
   },
-  emptyCartIcon: {
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 16,
     marginBottom: 24,
-    opacity: 0.6,
   },
-  emptyCartTitle: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#2c3e50',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  emptyCartSubtitle: {
-    fontSize: 16,
-    color: '#6c757d',
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 24,
-  },
-  continueShoppingButton: {
+  shopBtn: {
     backgroundColor: '#FF6B35',
-    borderRadius: 25,
-    elevation: 4,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  continueShoppingButtonContent: {
-    paddingHorizontal: 40,
+    paddingHorizontal: 24,
     paddingVertical: 12,
+    borderRadius: 8,
   },
-  billContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    margin: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f3f4',
+  shopBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
-  billHeader: {
+  
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  couponModal: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '60%',
+  },
+  modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  billTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2c3e50',
-  },
-  billDetails: { 
-    padding: 0 
-  },
-  billRow: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: 16, 
-    paddingVertical: 12, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#f1f3f4' 
-  },
-  billLabel: { 
-    fontSize: 15, 
-    color: '#6c757d',
-    fontWeight: '500',
-  },
-  billValue: { 
-    fontSize: 15, 
-    color: '#2c3e50', 
-    fontWeight: '600' 
-  },
-  discountText: { 
-    color: '#28a745', 
-    fontWeight: '700' 
-  },
-  billDivider: { 
-    marginVertical: 16 
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderTopWidth: 2,
-    borderTopColor: '#FF6B35',
-    marginTop: 12,
-  },
-  totalLabel: { 
-    fontSize: 20, 
-    fontWeight: '700', 
-    color: '#2c3e50' 
-  },
-  totalValue: { 
-    fontSize: 22, 
-    fontWeight: '800', 
-    color: '#FF6B35' 
-  },
-  couponContainer: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 24,
-    margin: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    borderWidth: 1,
-    borderColor: '#f1f3f4',
-  },
-  couponHeader: {
+  modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2c3e50',
-    marginBottom: 20,
+    color: '#000',
   },
-  couponInputContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    gap: 12,
-  },
-  couponInput: {
+  modalContent: {
     flex: 1,
-  },
-  applyButton: {
-    backgroundColor: '#FF6B35',
-    borderRadius: 8,
-    elevation: 2,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  couponError: {
-    color: '#dc3545',
-    fontSize: 13,
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  couponSuccess: {
-    color: '#28a745',
-    fontSize: 13,
-    marginBottom: 8,
-    fontWeight: '500',
-  },
-  appliedCouponContainer: {
-    backgroundColor: '#d4edda',
-    borderRadius: 12,
     padding: 16,
-    marginTop: 12,
+  },
+  couponItem: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#c3e6cb',
+    borderColor: '#e0e0e0',
+    marginBottom: 12,
   },
-  appliedCouponInfo: { 
-    flex: 1 
+  disabledCoupon: {
+    opacity: 0.5,
   },
-  appliedCouponCode: { 
-    fontSize: 16, 
-    fontWeight: '700', 
-    color: '#155724', 
-    marginBottom: 4 
-  },
-  appliedCouponDescription: { 
-    fontSize: 14, 
-    color: '#155724' 
-  },
-
-  checkoutBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'white',
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-  },
-  checkoutInfo: {
+  couponLeft: {
     flex: 1,
   },
-  checkoutTotalLabel: {
+  couponCode: {
     fontSize: 14,
-    color: '#6c757d',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  checkoutTotalPrice: {
-    fontSize: 26,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#FF6B35',
+    marginBottom: 4,
   },
-  checkoutButton: {
+  couponTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#000',
+    marginBottom: 4,
+  },
+  couponDesc: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+  minOrderText: {
+    fontSize: 12,
+    color: '#F44336',
+  },
+  couponRight: {
+    justifyContent: 'center',
+  },
+  applyBtn: {
     backgroundColor: '#FF6B35',
-    borderRadius: 12,
-    elevation: 4,
-    shadowColor: '#FF6B35',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
   },
-  checkoutButtonContent: {
-    paddingHorizontal: 40,
-    paddingVertical: 12,
+  applyText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  appliedText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#4CAF50',
   },
 }); 
