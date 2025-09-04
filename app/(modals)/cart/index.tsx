@@ -134,7 +134,6 @@ export default function CartScreen() {
       return;
     }
     setAppliedCoupon(coupon);
-    setShowCouponModal(false);
   };
 
 
