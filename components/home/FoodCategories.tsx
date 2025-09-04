@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { Text, Surface } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Text } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
 interface FoodCategory {
@@ -23,43 +23,56 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
     router.push(`/search?category=${categoryName}`);
   };
 
-  const renderCategory = (category: FoodCategory) => (
-    <Pressable
-      key={category.id}
-      style={styles.categoryItem}
-      onPress={() => handleCategoryPress(category.name)}
-    >
-      <Surface style={styles.categoryCard}>
-        <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-          <MaterialIcons name={category.icon as any} size={24} color="white" />
+  const renderCategory = (category: FoodCategory, index: number) => {
+    return (
+      <Pressable
+        key={category.id}
+        style={[
+          styles.categoryItem,
+          { marginLeft: index === 0 ? 16 : 0 }
+        ]}
+        onPress={() => handleCategoryPress(category.name)}
+      >
+        <View style={styles.categoryCard}>
+          {/* Icon */}
+          <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
+            <MaterialCommunityIcons 
+              name={category.icon as any} 
+              size={24} 
+              color="white" 
+            />
+          </View>
+          
+          {/* Name */}
+          <Text style={styles.categoryName} numberOfLines={1}>
+            {category.name}
+          </Text>
         </View>
-        <Text style={styles.categoryName} numberOfLines={1}>{category.name}</Text>
-        <Text style={styles.categoryCount}>{category.itemCount} items</Text>
-      </Surface>
-    </Pressable>
-  );
+      </Pressable>
+    );
+  };
 
   return (
     <View style={styles.section}>
+      {/* Simple Header */}
       <View style={styles.sectionHeader}>
-        <View style={styles.titleContainer}>
-          <Text style={styles.sectionTitle}>🍽️ Food Categories</Text>
-          <Text style={styles.sectionSubtitle}>Explore by cuisine type</Text>
-        </View>
+        <Text style={styles.sectionTitle}>Food Categories</Text>
         <Pressable 
           style={styles.viewAllButton}
           onPress={() => router.push('/search')}
         >
           <Text style={styles.viewAllText}>View All</Text>
-          <MaterialIcons name="arrow-forward" size={16} color="#FF6B35" />
+          <MaterialCommunityIcons name="arrow-right" size={16} color="#FF6B35" />
         </Pressable>
       </View>
+      
+      {/* Categories Scroll */}
       <ScrollView 
         horizontal 
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {categories.map(renderCategory)}
+        {categories.map((category, index) => renderCategory(category, index))}
       </ScrollView>
     </View>
   );
@@ -67,99 +80,58 @@ export default function FoodCategories({ categories }: FoodCategoriesProps) {
 
 const styles = StyleSheet.create({
   section: {
-    padding: 24,
-    paddingTop: 24,
-    backgroundColor: 'white',
-    marginBottom: 24,
-    marginHorizontal: 20,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
+    paddingVertical: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 24,
-  },
-  titleContainer: {
-    flex: 1,
-    marginRight: 16,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   sectionTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
+    gap: 4,
   },
   viewAllText: {
-    color: '#FF6B35',
     fontSize: 14,
     fontWeight: '600',
-    marginRight: 4,
+    color: '#FF6B35',
   },
   scrollContent: {
-    paddingRight: 20,
-    paddingLeft: 0,
+    paddingRight: 16,
   },
   categoryItem: {
-    marginRight: 20,
+    marginRight: 12,
   },
   categoryCard: {
-    width: 100,
     alignItems: 'center',
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: 'white',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    minHeight: 120,
+    width: 80,
   },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  iconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
     elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   categoryName: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '600',
     textAlign: 'center',
     color: '#1a1a1a',
-    marginBottom: 6,
-    lineHeight: 18,
-  },
-  categoryCount: {
-    fontSize: 12,
-    color: '#666',
-    textAlign: 'center',
-    fontWeight: '500',
     lineHeight: 16,
   },
 }); 

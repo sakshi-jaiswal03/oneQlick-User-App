@@ -33,14 +33,14 @@ export interface QuickReorder {
 
 // Food categories
 export const foodCategories: FoodCategory[] = [
-  { id: '1', name: 'Biryani', icon: 'restaurant', color: '#FF6B35', itemCount: 45 },
-  { id: '2', name: 'Pizza', icon: 'local-pizza', color: '#FFD93D', itemCount: 32 },
-  { id: '3', name: 'Chinese', icon: 'fastfood', color: '#6BCF7F', itemCount: 28 },
-  { id: '4', name: 'South Indian', icon: 'restaurant', color: '#4ECDC4', itemCount: 38 },
-  { id: '5', name: 'Sweets', icon: 'cake', color: '#FF8E9E', itemCount: 25 },
-  { id: '6', name: 'Tea/Coffee', icon: 'local-cafe', color: '#A8E6CF', itemCount: 18 },
-  { id: '7', name: 'Fast Food', icon: 'fastfood', color: '#FFB74D', itemCount: 42 },
-  { id: '8', name: 'North Indian', icon: 'restaurant', color: '#9C27B0', itemCount: 55 },
+  { id: '1', name: 'Biryani', icon: 'food-variant', color: '#FF6B35', itemCount: 45 },
+  { id: '2', name: 'Pizza', icon: 'pizza', color: '#FFD93D', itemCount: 32 },
+  { id: '3', name: 'Chinese', icon: 'noodles', color: '#6BCF7F', itemCount: 28 },
+  { id: '4', name: 'South Indian', icon: 'food-drumstick', color: '#4ECDC4', itemCount: 38 },
+  { id: '5', name: 'Sweets', icon: 'cupcake', color: '#FF8E9E', itemCount: 25 },
+  { id: '6', name: 'Tea/Coffee', icon: 'coffee', color: '#A8E6CF', itemCount: 18 },
+  { id: '7', name: 'Fast Food', icon: 'hamburger', color: '#FFB74D', itemCount: 42 },
+  { id: '8', name: 'North Indian', icon: 'food-turkey', color: '#9C27B0', itemCount: 55 },
 ];
 
 // Nearby restaurants with Unsplash images

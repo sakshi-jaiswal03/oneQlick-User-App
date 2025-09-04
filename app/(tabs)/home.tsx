@@ -10,7 +10,8 @@ import {
   Pressable 
 } from 'react-native';
 import { Text } from 'react-native-paper';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useCart } from '../../hooks/useCart';
 import { FoodItem } from '../../types';
@@ -20,7 +21,6 @@ import {
   FoodCategories,
   NearbyRestaurants,
   PopularDishes,
-  QuickReorder,
 } from '../../components/home';
 import Carousel from '../../components/home/Carousel';
 import { carouselItems } from '../../components/home/carouselData';
@@ -28,7 +28,6 @@ import {
   foodCategories,
   nearbyRestaurants,
   popularDishes,
-  quickReorders,
 } from '../../components/home/homeData';
 
 export default function HomeScreen() {
@@ -49,7 +48,6 @@ export default function HomeScreen() {
         await getCurrentLocationData();
       } catch (error) {
         console.log('Location not available on app start:', error);
-        // Set a fallback message instead of showing the loading message indefinitely
         setUserLocation('Tap to set your location');
       }
     };
@@ -60,10 +58,8 @@ export default function HomeScreen() {
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true);
     try {
-      // Refresh location along with other data
       await getCurrentLocationData();
-      // Simulate other API calls
-    setTimeout(() => {
+      setTimeout(() => {
         setRefreshing(false);
       }, 1000);
     } catch (error) {
@@ -93,7 +89,6 @@ export default function HomeScreen() {
   const handleLocationPress = async () => {
     try {
       await getCurrentLocationData();
-      // No success alert - silent update
     } catch (error) {
       console.error('Location error:', error);
       if (error instanceof Error && error.message.includes('permission')) {
@@ -103,7 +98,6 @@ export default function HomeScreen() {
           [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Enable Location', onPress: () => {
-              // Try to request permission again
               getCurrentLocationData().catch(() => {
                 Alert.alert('Settings', 'Please go to Settings > Privacy & Security > Location Services and enable location for this app.');
               });
@@ -125,7 +119,6 @@ export default function HomeScreen() {
 
   const handleAddToCart = async (dish: FoodItem) => {
     try {
-      // Add the food item directly to cart since it's already in the correct format
       await addToCart(dish, 1);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -150,14 +143,21 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
+        {/* Header - Keep intact */}
         <HomeHeader 
           userLocation={userLocation}
           onLocationPress={handleLocationPress}
           hasLocation={!!currentCoordinates}
         />
 
-
+        {/* Enhanced Search Bar Section */}
+        <View style={styles.searchSection}>
+          <Pressable style={styles.searchBar} onPress={() => router.push('/search')}>
+            <MaterialCommunityIcons name="magnify" size={20} color="#666" />
+            <Text style={styles.searchText}>Search for restaurants, cuisines, dishes...</Text>
+            <MaterialCommunityIcons name="microphone" size={18} color="#FF6B35" />
+          </Pressable>
+        </View>
 
         {/* Carousel */}
         <Carousel 
@@ -166,50 +166,106 @@ export default function HomeScreen() {
           onItemChange={handleCarouselChange}
           onItemPress={(item) => {
             console.log('Carousel item pressed:', item.title);
-            // Handle carousel item press
           }}
         />
-
-        {/* Quick Actions */}
-        <View style={styles.quickActionsSection}>
-          <View style={styles.quickActionsRow}>
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/search')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="search" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>Search Food</Text>
-            </Pressable>
-            
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/(modals)/cart')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="shopping-cart" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>View Cart</Text>
-            </Pressable>
-            
-            <Pressable style={styles.quickActionButton} onPress={() => router.push('/orders')}>
-              <View style={styles.quickActionIcon}>
-                <MaterialIcons name="receipt" size={24} color="#FF6B35" />
-              </View>
-              <Text style={styles.quickActionText}>My Orders</Text>
-            </Pressable>
-          </View>
-        </View>
 
         {/* Food Categories */}
         <FoodCategories categories={foodCategories} />
 
-        {/* Quick Reorder */}
-        <QuickReorder reorders={quickReorders} />
-
-        {/* Restaurants Near You */}
-        <NearbyRestaurants restaurants={nearbyRestaurants} />
+        {/* Restaurants Near You Section */}
+        <View style={styles.restaurantsSection}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.titleContainer}>
+              <View style={styles.titleRow}>
+                <MaterialCommunityIcons name="store" size={20} color="#FF6B35" />
+                <Text style={styles.sectionTitle}>Restaurants Near You</Text>
+              </View>
+              <Text style={styles.sectionSubtitle}>Fastest delivery • Best rated</Text>
+            </View>
+            <Pressable style={styles.viewAllButton}>
+              <Text style={styles.viewAllText}>View All</Text>
+              <MaterialCommunityIcons name="arrow-right" size={14} color="#FF6B35" />
+            </Pressable>
+          </View>
+          
+          <NearbyRestaurants restaurants={nearbyRestaurants} />
+        </View>
 
         {/* Popular Dishes */}
         <PopularDishes 
-          dishes={popularDishes}
+          dishes={popularDishes.slice(0, 4)}
           onAddToCart={handleAddToCart}
         />
+
+        {/* More to Explore Section */}
+        <View style={styles.moreExploreSection}>
+          <View style={styles.exploreHeader}>
+            <MaterialCommunityIcons name="compass-outline" size={20} color="#FF6B35" />
+            <Text style={styles.exploreTitle}>More to explore</Text>
+          </View>
+          
+          <View style={styles.exploreGrid}>
+            <Pressable style={styles.exploreCard}>
+              <LinearGradient
+                colors={['#FF6B35', '#FF8562']}
+                style={styles.exploreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.exploreIconContainer}>
+                  <MaterialCommunityIcons name="percent" size={20} color="white" />
+                </View>
+                <Text style={styles.exploreCardTitle}>Offers</Text>
+                <Text style={styles.exploreCardSubtitle}>Up to 60% off</Text>
+              </LinearGradient>
+            </Pressable>
+            
+            <Pressable style={styles.exploreCard}>
+              <LinearGradient
+                colors={['#4CAF50', '#66BB6A']}
+                style={styles.exploreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.exploreIconContainer}>
+                  <MaterialCommunityIcons name="leaf" size={20} color="white" />
+                </View>
+                <Text style={styles.exploreCardTitle}>Healthy</Text>
+                <Text style={styles.exploreCardSubtitle}>Pure veg options</Text>
+              </LinearGradient>
+            </Pressable>
+            
+            <Pressable style={styles.exploreCard}>
+              <LinearGradient
+                colors={['#2196F3', '#42A5F5']}
+                style={styles.exploreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.exploreIconContainer}>
+                  <MaterialCommunityIcons name="lightning-bolt" size={20} color="white" />
+                </View>
+                <Text style={styles.exploreCardTitle}>Express</Text>
+                <Text style={styles.exploreCardSubtitle}>Under 20 mins</Text>
+              </LinearGradient>
+            </Pressable>
+            
+            <Pressable style={styles.exploreCard}>
+              <LinearGradient
+                colors={['#9C27B0', '#BA68C8']}
+                style={styles.exploreGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              >
+                <View style={styles.exploreIconContainer}>
+                  <MaterialCommunityIcons name="crown" size={20} color="white" />
+                </View>
+                <Text style={styles.exploreCardTitle}>Premium</Text>
+                <Text style={styles.exploreCardSubtitle}>Fine dining</Text>
+              </LinearGradient>
+            </Pressable>
+          </View>
+        </View>
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -221,7 +277,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f6fa',
   },
   scrollView: {
     flex: 1,
@@ -230,47 +286,139 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 0,
   },
-  quickActionsSection: {
-    paddingHorizontal: 20,
+  searchSection: {
+    paddingHorizontal: 16,
+    marginTop: 16,
     marginBottom: 24,
   },
-  quickActionsRow: {
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#e8eaed',
+    gap: 12,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#666',
+  },
+  restaurantsSection: {
+    backgroundColor: 'white',
+    marginBottom: 6,
+    paddingVertical: 20,
+  },
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
-  },
-  quickActionButton: {
-    flex: 1,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-    minHeight: 120,
-  },
-  quickActionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FFF3E0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    paddingHorizontal: 16,
     marginBottom: 16,
-    borderWidth: 2,
+  },
+  titleContainer: {
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#1a1a1a',
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+    borderWidth: 1,
     borderColor: '#FFE0B2',
   },
-  quickActionText: {
-    fontSize: 15,
+  viewAllText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FF6B35',
+  },
+  moreExploreSection: {
+    backgroundColor: 'white',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginBottom: 6,
+  },
+  exploreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  exploreTitle: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#1a1a1a',
+  },
+  exploreGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'space-between',
+  },
+  exploreCard: {
+    width: '48%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  exploreGradient: {
+    padding: 14,
+    alignItems: 'center',
+    minHeight: 90,
+    justifyContent: 'center',
+    gap: 6,
+  },
+  exploreIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  exploreCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'white',
     textAlign: 'center',
-    lineHeight: 20,
+  },
+  exploreCardSubtitle: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.85)',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   bottomSpacing: {
     height: 60,
