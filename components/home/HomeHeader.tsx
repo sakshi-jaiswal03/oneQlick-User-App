@@ -13,7 +13,7 @@ interface HomeHeaderProps {
 
 export default function HomeHeader({ userLocation, onLocationPress, hasLocation = false }: HomeHeaderProps) {
   const router = useRouter();
-  
+
   // Mock notifications data - in real app, this would come from a hook or API
   const [unreadNotifications, setUnreadNotifications] = useState(3);
 
